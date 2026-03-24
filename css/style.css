@@ -1,0 +1,754 @@
+/* ==========================================
+   RALLY ROADBOOK CREATOR — STYLESHEET
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #0f1117;
+  --bg2: #181c27;
+  --bg3: #1f2535;
+  --border: #2a3048;
+  --accent: #f5a623;
+  --accent2: #e8891a;
+  --text: #e8eaf0;
+  --text-muted: #7a82a0;
+  --danger: #e05252;
+  --success: #52c97e;
+  --wp-dot: #f5a623;
+  --panel-w: 280px;
+  --topbar-h: 52px;
+  --radius: 6px;
+  --font-main: 'Barlow', sans-serif;
+  --font-cond: 'Barlow Condensed', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ---- TOP BAR ---- */
+#topbar {
+  height: var(--topbar-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  position: relative;
+  z-index: 1000;
+}
+
+#logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-cond);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#topbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ---- BUTTONS ---- */
+.btn {
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #111;
+}
+.btn-primary:hover { background: var(--accent2); }
+
+.btn-secondary {
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.full-width { width: 100%; }
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.btn-icon:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---- MAIN LAYOUT ---- */
+#main-layout {
+  display: flex;
+  height: calc(100vh - var(--topbar-h));
+}
+
+/* ---- LEFT PANEL ---- */
+#left-panel {
+  width: var(--panel-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+#left-panel::-webkit-scrollbar { width: 4px; }
+#left-panel::-webkit-scrollbar-track { background: transparent; }
+#left-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.panel-section {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-section h3 {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  margin-top: 8px;
+}
+
+input[type="text"], textarea, select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type="text"]:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+}
+
+.coord-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.coord-row input { flex: 1; }
+
+/* ---- VIA POINTS ---- */
+#via-points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.via-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.via-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.via-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0; }
+
+/* ---- WAYPOINTS LIST ---- */
+#waypoints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+#waypoints-list::-webkit-scrollbar { width: 3px; }
+#waypoints-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+.wp-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  font-size: 12px;
+}
+.wp-list-item:hover { border-color: var(--accent); }
+.wp-list-item.has-comment { border-left: 3px solid var(--accent); }
+
+.wp-dot-mini {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--wp-dot);
+  flex-shrink: 0;
+}
+.wp-list-label { flex: 1; }
+.wp-list-dist { color: var(--text-muted); font-size: 11px; }
+
+/* ---- STATS ---- */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.stat-row strong { color: var(--accent); }
+
+/* ---- MAP ---- */
+#map-container {
+  flex: 1;
+  position: relative;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+#map-mode-indicator {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #111;
+  font-weight: 700;
+  font-family: var(--font-cond);
+  padding: 8px 20px;
+  border-radius: 20px;
+  z-index: 1000;
+  pointer-events: none;
+}
+.hidden { display: none !important; }
+
+/* Leaflet dark override */
+.leaflet-tile { filter: brightness(0.85) contrast(1.05) saturate(0.8); }
+.leaflet-container { background: #0d1018; }
+
+/* ---- WAYPOINT EDITOR — BACKDROP ---- */
+/* Only covers the panel itself — does NOT dim or block the map */
+#wp-editor-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 900px;       /* matches panel width */
+  max-width: 95vw;
+  height: 100vh;
+  background: transparent;
+  z-index: 1100;
+  pointer-events: none; /* clicks pass through to the map */
+  transition: opacity 0.3s ease;
+}
+#wp-editor-backdrop.hidden { display: none !important; }
+
+/* ---- WAYPOINT EDITOR — SLIDE-IN PANEL ---- */
+/* Remove the old .overlay centred-modal behaviour entirely */
+#wp-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 900px;
+  max-width: 95vw;
+
+  /* Start off-screen to the left */
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  z-index: 1200;
+  overflow-y: auto;
+
+  background: var(--bg2);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.7);
+
+  display: flex;
+  flex-direction: column;
+
+  /* Hidden completely when not in use */
+  visibility: hidden;
+  pointer-events: none;
+}
+#wp-editor-overlay.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* Slide in */
+#wp-editor-overlay.open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ---- WP EDITOR INNER (unchanged sizing, now fills the panel) ---- */
+#wp-editor {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#wp-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  flex-shrink: 0;
+}
+#wp-editor-header h2 {
+  font-family: var(--font-cond);
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#wp-editor-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ---- SVG CANVAS AREA ---- */
+#canvas-area {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+
+#canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tool-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.tool-btn:hover, .tool-btn.active, .tool-btn-text:hover, tool-btn-text.active {
+  background: var(--accent);
+  color: #111;
+  border-color: var(--accent);
+}
+
+.tool-btn-group {
+  display: flex;
+  gap: 8px; /* optional spacing */
+  transition: all 0.15s;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tool-btn-text {
+
+  flex: 1;                 /* makes all buttons equal width */
+  text-align: center;
+  white-space: nowrap;     /* prevents wrapping differences */
+}
+
+.tool-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+input[type="color"] {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+#tool-stroke-width {
+  width: 54px;
+  padding: 4px;
+  font-size: 12px;
+  height: 28px;
+}
+
+#svg-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+#wp-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  aspect-ratio: 1;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  cursor: crosshair;
+}
+
+#distance-labels {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.dist-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 80px;
+}
+
+.dist-tag {
+  font-size: 10px;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.dist-input {
+  font-size: 12px;
+  padding: 4px 7px;
+  background: var(--bg);
+  color: var(--accent);
+  font-weight: 600;
+  width: 100%;
+}
+
+/* ---- ICON PANEL ---- */
+#icon-panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+#icon-search-bar {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+#icon-search { font-size: 13px; }
+
+#icon-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+#icon-tree::-webkit-scrollbar { width: 4px; }
+#icon-tree::-webkit-scrollbar-thumb { background: var(--border); }
+
+.icon-level-header {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 8px 4px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.icon-level-header:hover { color: var(--text); }
+
+.icon-level-toggle { font-size: 10px; transition: transform 0.2s; }
+.icon-level-toggle.open { transform: rotate(90deg); }
+
+.icon-group {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.icon-item:hover { background: var(--bg3); border-color: var(--border); }
+.icon-item.dragging { opacity: 0.5; }
+
+.icon-item svg, .icon-item img {
+  width: 32px;
+  height: 32px;
+}
+.icon-name {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- WP PROPS PANEL ---- */
+#wp-props-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+#wp-comment {
+  resize: vertical;
+  min-height: 80px;
+}
+
+#icon-props {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prop-row label {
+  margin: 0;
+  min-width: 60px;
+  font-size: 12px;
+}
+.prop-row input[type="range"] { flex: 1; }
+.prop-row span { min-width: 36px; font-size: 12px; color: var(--accent); text-align: right; }
+
+/* ---- WAYPOINT MARKERS ---- */
+.wp-marker-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--wp-dot);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(245,166,35,0.4), 0 2px 6px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.wp-marker-circle:hover { transform: scale(1.4); }
+.wp-marker-circle.has-data { background: var(--accent); box-shadow: 0 0 0 3px rgba(245,166,35,0.5); }
+
+/* ---- ROUTE LINE INTERACTION ---- */
+.route-hit-line { cursor: crosshair !important; }
+.route-vis-line { pointer-events: none; }
+
+.leaflet-interactive.route-hit-line {
+  cursor: crosshair !important;
+}
+
+/* ---- ROUTE WINDOW RECTANGLE ---- */
+.route-window-rect {
+  cursor: grab;
+}
+.route-window-rect:active {
+  cursor: grabbing;
+}
+/* Corner resize handles */
+.route-window-handle {
+  cursor: nwse-resize;
+}
+
+/* ---- LEAFLET OVERRIDES ---- */
+.leaflet-routing-container { display: none; }
+
+
+/* scrollbar global */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ---- SPINNER for buttons ---- */
+.btn.loading, .tool-btn.loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn.loading::after, .tool-btn.loading::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  animation: spinner 0.6s linear infinite;
+}
+.tool-btn.loading::after {
+  border: 2px solid rgba(0,0,0, 0.5);
+  border-top-color: #000;
+}
+
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- TOAST NOTIFICATIONS ---- */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 19999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.toast-notification {
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
+  opacity: 0;
+}
+
+.toast-notification.success {
+  background: var(--success);
+}
+
+.toast-notification.error {
+  background: var(--danger);
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

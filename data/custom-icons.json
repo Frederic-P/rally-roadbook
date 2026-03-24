@@ -1,0 +1,34 @@
+{
+  "_comment": "Rally Roadbook Creator — Custom Icon Library Extension",
+  "_description": "Add custom icons here. They will be merged with the built-in icon set.",
+  "_howto": "Each icon needs: id (unique), name, description, l1 (level1), l2 (level2), l3 (level3), svgContent (SVG markup for 32×32 viewBox)",
+  "icons": [
+    {
+      "id": "custom-km-marker",
+      "name": "KM Marker",
+      "description": "Kilometer distance marker post",
+      "l1": "Race Info",
+      "l2": "Navigation",
+      "l3": "Distance",
+      "svgContent": "<rect x='13' y='4' width='6' height='20' fill='#e74c3c' rx='1'/><rect x='6' y='8' width='20' height='10' fill='#e74c3c' rx='2'/><rect x='7' y='9' width='18' height='8' fill='white'/><text x='16' y='16' text-anchor='middle' font-size='7' fill='#e74c3c' font-weight='bold'>KM</text>"
+    },
+    {
+      "id": "custom-photo",
+      "name": "Photo Point",
+      "description": "Scenic viewpoint or photo opportunity",
+      "l1": "Services",
+      "l2": "Points of Interest",
+      "l3": "Scenic",
+      "svgContent": "<rect x='4' y='8' width='24' height='18' rx='3' stroke='#3498db' stroke-width='2' fill='none'/><circle cx='16' cy='17' r='5' stroke='#3498db' stroke-width='2' fill='none'/><circle cx='16' cy='17' r='2' fill='#3498db'/><rect x='11' y='6' width='10' height='4' rx='1' fill='#3498db'/>"
+    },
+    {
+      "id": "custom-bridge",
+      "name": "Bridge",
+      "description": "Bridge crossing — check height/weight limits",
+      "l1": "Hazards",
+      "l2": "Infrastructure",
+      "l3": "Structures",
+      "svgContent": "<path d='M4 20 L28 20' stroke='#7f8c8d' stroke-width='3' stroke-linecap='round'/><path d='M8 20 L8 12 Q16 8 24 12 L24 20' stroke='#7f8c8d' stroke-width='2' fill='rgba(127,140,141,0.2)'/><path d='M4 22 L28 22' stroke='#555' stroke-width='1.5'/>"
+    }
+  ]
+}

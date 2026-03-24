@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rally Roadbook Creator</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+  <!-- JSZip for export/import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div id="logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="#f5a623" stroke-width="2"/>
+        <path d="M8 20 L14 8 L20 20" stroke="#f5a623" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="14" cy="8" r="2.5" fill="#f5a623"/>
+      </svg>
+      <span>Rally Roadbook Creator</span>
+    </div>
+    <div id="topbar-actions">
+      <button class="btn btn-secondary" id="btn-new-route">New Route</button>
+      <button class="btn btn-secondary" id="btn-load-zip">Load ZIP</button>
+      <button class="btn btn-secondary" id="btn-save-zip">Export ZIP</button>
+      <button class="btn btn-primary" id="btn-export-pdf">Export PDF</button>
+      <button class="btn btn-primary" id="btn-export-gpx">Export GPX</button>
+    </div>
+    <input type="file" id="input-load-zip" accept=".zip" style="display:none" />
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div id="main-layout">
+
+    <!-- LEFT PANEL: Route controls -->
+    <aside id="left-panel">
+      <div class="panel-section">
+        <h3>Route Setup</h3>
+        <label>Start Point</label>
+        <div class="coord-row">
+          <input type="text" id="input-start" placeholder="Search start address…" />
+          <button class="btn-icon" id="btn-pick-start" title="Pick on map">📍</button>
+        </div>
+        <label>End Point</label>
+        <div class="coord-row">
+          <input type="text" id="input-end" placeholder="Search end address…" />
+          <button class="btn-icon" id="btn-pick-end" title="Pick on map">🏁</button>
+        </div>
+        <button class="btn btn-primary full-width" id="btn-calc-route">Calculate Route</button>
+      </div>
+
+      <div class="panel-section">
+        <h3>Via Points</h3>
+        <div id="via-points-list"></div>
+        <button class="btn btn-secondary full-width" id="btn-add-via">+ Add Via Point</button>
+      </div>
+
+      <div class="panel-section">
+        <h3>Waypoints <span id="wp-count">0</span></h3>
+        <div id="waypoints-list"></div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Route Stats</h3>
+        <div id="route-stats">
+          <div class="stat-row"><span>Total Distance</span><strong id="stat-distance">—</strong></div>
+          <div class="stat-row"><span>Waypoints</span><strong id="stat-wps">—</strong></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAP -->
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="map-mode-indicator" class="hidden">Click on map to set point</div>
+    </div>
+
+  </div>
+
+  <!-- WAYPOINT EDITOR BACKDROP -->
+  <div id="wp-editor-backdrop" class="hidden"></div>
+
+  <!-- WAYPOINT EDITOR — slide-in panel from the left -->
+  <div id="wp-editor-overlay" class="hidden">
+    <div id="wp-editor">
+      <div id="wp-editor-header">
+        <h2>Waypoint Editor</h2>
+        <button id="btn-close-editor" class="btn-icon">✕</button>
+      </div>
+
+      <div id="wp-editor-body">
+
+        <!-- SVG Canvas -->
+        <div id="canvas-area">
+          <div id="canvas-toolbar">
+            <button class="tool-btn" id="tool-line" title="Draw Line">✏</button>
+            <button class="tool-btn" id="tool-arrow" title="Draw Arrow">→</button>
+            <button class="tool-btn" id="tool-straight-line" title="Draw Straight Line">-</button>
+            <button class="tool-btn" id="tool-circle" title="Draw Circle">○</button>
+            <button class="tool-btn" id="tool-text" title="Add Text">T</button>
+            <div class="tool-divider"></div>
+            <input type="color" id="tool-color" value="#1a1a2e" title="Color" />
+            <select id="tool-stroke-width" title="Stroke width">
+              <option value="1">1px</option>
+              <option value="2" selected>2px</option>
+              <option value="3">3px</option>
+              <option value="5">5px</option>
+            </select>
+            <button class="tool-btn" id="btn-undo" title="Undo">↩</button>
+            <button class="tool-btn" id="btn-redo" title="Redo">↪</button>
+            <button class="tool-btn" id="btn-clear-drawing" title="Clear drawings">🗑</button>
+            <div class="tool-divider"></div>
+            <!-- Stencil: click to toggle map-snapping mode; click a road on the map to copy it -->
+             <!-- <div class="tool-btn-group"> -->
+              <button class="tool-btn-text" id="btn-stencil"
+                title="Stencil mode: click roads on the map to copy them into the illustration"><span>Freehand draw</span></button>
+              <button class="tool-btn-text" id="btn-stencil-eraser"
+                title="Stencil Eraser: click green lines to remove"><span>Erase</span></button>
+              <button class="tool-btn-text" id="btn-clear-stencil"
+                title="Remove all stencilled roads from this waypoint"><span>Erase all</span></span></button>
+              <button class="tool-btn-text" id="btn-auto-stencil"
+                title="Auto-stencil roads around the waypoint"><span>Auto draw</span></button>
+            <!-- </div> -->
+          </div>
+          <div id="svg-wrapper">
+            <svg id="wp-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+              <g id="svg-base-layer"></g>
+              <g id="svg-draw-layer"></g>
+              <g id="svg-icon-layer"></g>
+            </svg>
+          </div>
+          <div id="distance-labels">
+            <div class="dist-label">
+              <span class="dist-tag">A->B</span>
+              <input type="text" id="dist-ab" class="dist-input" readonly />
+            </div>
+            <div class="dist-label">
+              <span class="dist-tag">prev->A</span>
+              <input type="text" id="dist-prev" class="dist-input" readonly />
+            </div>
+            <div class="dist-label">
+              <span class="dist-tag">Total</span>
+              <input type="text" id="dist-total" class="dist-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Icon Panel -->
+        <div id="icon-panel">
+          <div id="icon-search-bar">
+            <input type="text" id="icon-search" placeholder="Search icons…" />
+          </div>
+          <div id="icon-tree"></div>
+        </div>
+
+        <!-- Right panel: comment + properties -->
+        <div id="wp-props-panel">
+          <label>Waypoint Comment</label>
+          <textarea id="wp-comment" rows="4" placeholder="Add notes for this waypoint…"></textarea>
+
+          <label>Selected Icon Properties</label>
+          <div id="icon-props" class="hidden">
+            <div class="prop-row">
+              <label>Scale</label>
+              <input type="range" id="icon-scale" min="0.2" max="3" step="0.05" value="1" />
+              <span id="icon-scale-val">1×</span>
+            </div>
+            <div class="prop-row">
+              <label>Rotation</label>
+              <input type="range" id="icon-rotation" min="0" max="360" step="1" value="0" />
+              <span id="icon-rotation-val">0°</span>
+            </div>
+            <div class="prop-row">
+              <button class="btn btn-secondary" id="btn-delete-icon">Remove Icon</button>
+            </div>
+          </div>
+
+          <div style="margin-top:auto">
+            <button class="btn btn-secondary full-width" id="btn-delete-wp" style="margin-bottom:10px;background:#e74c3c;border-color:#c0392b;color:#fff;">Delete Waypoint</button>
+            <button class="btn btn-primary full-width" id="btn-save-wp">Save Waypoint</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- App scripts -->
+  <script src="js/icons.js"></script>
+  <script src="js/svg-editor.js"></script>
+  <script src="js/waypoint.js"></script>
+  <script src="js/route.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

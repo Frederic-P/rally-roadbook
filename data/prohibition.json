@@ -1,0 +1,110 @@
+[
+  {
+    "id": "rs-prohib-no-entry",
+    "name": "No Entry",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Access",
+    "tags": ["forbidden"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" fill=\"#c0392b\"/><rect x=\"6\" y=\"14\" width=\"20\" height=\"4\" fill=\"white\"/>"
+  },
+  {
+    "id": "rs-prohib-no-parking",
+    "name": "No Parking",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Parking",
+    "tags": ["parking"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><line x1=\"8\" y1=\"8\" x2=\"24\" y2=\"24\" stroke=\"#c0392b\" stroke-width=\"3\"/>"
+  },
+  {
+    "id": "rs-prohib-no-stopping",
+    "name": "No Stopping",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Parking",
+    "tags": ["stop"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" fill=\"#2980b9\" stroke=\"#c0392b\" stroke-width=\"3\"/><line x1=\"8\" y1=\"8\" x2=\"24\" y2=\"24\" stroke=\"#c0392b\" stroke-width=\"3\"/><line x1=\"24\" y1=\"8\" x2=\"8\" y2=\"24\" stroke=\"#c0392b\" stroke-width=\"3\"/>"
+  },
+  {
+    "id": "rs-prohib-speed-20",
+    "name": "Speed Limit 20",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">20</text>"
+  },
+  {
+    "id": "rs-prohib-speed-30",
+    "name": "Speed Limit 30",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">30</text>"
+  },
+  {
+    "id": "rs-prohib-speed-50",
+    "name": "Speed Limit 50",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">50</text>"
+  },
+  {
+    "id": "rs-prohib-speed-70",
+    "name": "Speed Limit 70",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">70</text>"
+  },
+  {
+    "id": "rs-prohib-speed-90",
+    "name": "Speed Limit 90",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">90</text>"
+  },
+  {
+    "id": "rs-prohib-speed-100",
+    "name": "Speed Limit 100",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">100</text>"
+  },
+  {
+    "id": "rs-prohib-speed-110",
+    "name": "Speed Limit 110",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">110</text>"
+  },
+  {
+    "id": "rs-prohib-speed-120",
+    "name": "Speed Limit 120",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">120</text>"
+  },
+  {
+    "id": "rs-prohib-speed-130",
+    "name": "Speed Limit 130",
+    "l1": "Road Signs",
+    "l2": "Prohibition",
+    "l3": "Speed",
+    "tags": ["speed"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" stroke=\"#c0392b\" stroke-width=\"3\" fill=\"white\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\">130</text>"
+  }
+]

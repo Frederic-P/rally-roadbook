@@ -1,0 +1,191 @@
+[
+  {
+    "id": "rs-warning-curve-left",
+    "name": "Dangerous Curve Left",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["curve", "left", "danger", "A1a"],
+    "svgContent": "<svg x=\"0px\" y=\"0px\" width=\"100%\" viewBox=\"0 0 75 66\" enable-background=\"new 0 0 75 66\" xml:space=\"preserve\"> <path fill=\"#D40122\" opacity=\"1.000000\" stroke=\"none\" d=\" M76.000000,58.000000 C76.000000,60.984364 76.000000,63.968731 76.000000,66.970200 C50.999992,66.970200 25.999990,66.970200 1.000000,66.970200 C1.000000,64.287628 1.000000,61.634861 1.328280,58.707214 C6.422709,50.472012 11.285061,42.567364 15.931718,34.537891 C22.372740,23.407742 28.651669,12.183789 35.000000,1.000000 C37.041668,1.000000 39.083332,1.000000 41.339684,1.334766 C42.021267,2.714681 42.393005,3.815728 42.969227,4.796657 C52.784512,21.505678 62.597305,38.216396 72.514915,54.864624 C73.278717,56.146782 74.820061,56.965748 76.000000,58.000000 M25.373596,35.834290 C21.296919,42.976555 17.220243,50.118820 13.029211,57.461433 C30.155077,57.461433 46.627342,57.461433 63.840069,57.461433 C55.238876,42.494026 46.991142,28.141682 38.415417,13.218583 C34.024841,20.871830 29.906775,28.050070 25.373596,35.834290 z\"/> <path fill=\"#FDF7F8\" opacity=\"1.000000\" stroke=\"none\"   d=\" M25.581152,35.531300   C29.906775,28.050070 34.024841,20.871830 38.415417,13.218583   C46.991142,28.141682 55.238876,42.494026 63.840069,57.461433   C46.627342,57.461433 30.155077,57.461433 13.029211,57.461433   C17.220243,50.118820 21.296919,42.976555 25.581152,35.531300  M44.170456,49.533154   C44.341751,50.835709 44.513050,52.138264 44.679081,53.400772   C46.397018,53.400772 48.084377,53.400772 49.803688,53.400772   C50.535782,43.136734 45.869965,35.641735 36.614933,33.227058   C35.042053,32.816685 33.037968,34.059040 31.233095,34.537842   C32.471386,35.945602 33.449444,38.063030 34.995998,38.630142   C39.946098,40.445316 43.202679,43.433830 44.170456,49.533154  z\"/> <path fill=\"#221F21\" opacity=\"1.000000\" stroke=\"none\"   d=\" M44.135929,49.133396   C43.202679,43.433830 39.946098,40.445316 34.995998,38.630142   C33.449444,38.063030 32.471386,35.945602 31.233095,34.537842   C33.037968,34.059040 35.042053,32.816685 36.614933,33.227058   C45.869965,35.641735 50.535782,43.136734 49.803688,53.400772   C48.084377,53.400772 46.397018,53.400772 44.679081,53.400772   C44.513050,52.138264 44.341751,50.835709 44.135929,49.133396  z\"/> </svg>"
+  },
+  {
+    "id": "rs-warning-curve-right",
+    "name": "Dangerous Curve Right",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["curve", "right", "danger", "A1b"],
+    "svgContent": "<svg x=\"0px\" y=\"0px\"   width=\"100%\" viewBox=\"0 0 95.816 83.729\" enable-background=\"new 0 0 95.816 83.729\" xml:space=\"preserve\"> <path fill=\"#ED1C24\" d=\"M43.608,2.271C44.488,0.876,46.047,0,47.846,0c1.72,0,2.479,0.836,3.399,2.113L94.867,75.31  c1.52,1.992,1.159,5.143-0.68,6.977c-1.039,1.037-2.239,1.515-3.598,1.436L4.185,83.681c-1-0.159-1.959-0.638-2.719-1.395  c-1.479-1.516-1.84-3.707-1.08-5.582L43.608,2.271z\"/> <path fill=\"none\" stroke=\"#ED1C24\" stroke-width=\"0\" stroke-miterlimit=\"3.863\" d=\"M43.608,2.271C44.488,0.876,46.048,0,47.846,0  c1.72,0,2.479,0.836,3.399,2.113L94.867,75.31c1.52,1.992,1.159,5.143-0.68,6.977c-1.039,1.037-2.239,1.515-3.598,1.436  L4.185,83.681c-1-0.159-1.959-0.638-2.719-1.395c-1.479-1.516-1.84-3.707-1.08-5.582L43.608,2.271z\"/> <polygon fill-rule=\"evenodd\" clip-rule=\"evenodd\" fill=\"#FFFFFF\" points=\"14.66,72.917 47.926,15.468 81.193,72.917 \"/> <polygon fill=\"none\" stroke=\"#ED1C24\" stroke-width=\"0\" stroke-miterlimit=\"3.863\" points=\"14.66,72.917 47.926,15.468   81.193,72.917 \"/> <path fill=\"#120C0E\" d=\"M54.524,40.066l2.918,3.069l-1.319,3.748l-4.518,1.275c-6.637,1.914-11.635,8.053-11.635,15.27v4.704  l-3.518-2.233l-3.399,2.233v-4.704c0-10.564,7.197-19.496,16.953-22.087L54.524,40.066z\"/> <path fill=\"none\" stroke=\"#120C0E\" stroke-width=\"0.2\" stroke-miterlimit=\"3.863\" d=\"M54.524,40.066l2.918,3.069l-1.319,3.748  l-4.518,1.275c-6.637,1.914-11.635,8.053-11.635,15.27v4.704l-3.518-2.233l-3.399,2.233v-4.704c0-10.564,7.198-19.496,16.953-22.087  L54.524,40.066z\"/> </svg> "
+  },
+  {
+    "id": "rs-warning-double-curve-left",
+    "name": "Double Curve Left First",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["curve", "double", "left", "A1c"],
+    "svgContent": "<svg version=\"1.2\" width=\"100%\" viewBox=\"0 0 95.816 83.729\" enable-background=\"new 0 0 95.816 83.729\" xml:space=\"preserve\">  <defs class=\"EmbeddedBulletChars\">   <g id=\"bullet-char-template-57356\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z\"/>   </g>   <g id=\"bullet-char-template-57354\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z\"/>   </g>   <g id=\"bullet-char-template-10146\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z\"/>   </g>   <g id=\"bullet-char-template-10132\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z\"/>   </g>   <g id=\"bullet-char-template-10007\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z\"/>   </g>   <g id=\"bullet-char-template-10004\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z\"/>   </g>   <g id=\"bullet-char-template-9679\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z\"/>   </g>   <g id=\"bullet-char-template-8226\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z\"/>   </g>   <g id=\"bullet-char-template-8211\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z\"/>   </g>   <g id=\"bullet-char-template-61548\" transform=\"scale(0.00048828125,-0.00048828125)\">    <path d=\"M 173,740 C 173,903 231,1043 346,1159 462,1274 601,1332 765,1332 928,1332 1067,1274 1183,1159 1299,1043 1357,903 1357,740 1357,577 1299,437 1183,322 1067,206 928,148 765,148 601,148 462,206 346,322 231,437 173,577 173,740 Z\"/>   </g>  </defs>  <g class=\"Page\">   <g class=\"com.sun.star.drawing.PolyPolygonShape\">    <g id=\"id3\">     <rect class=\"BoundingBox\" stroke=\"none\" fill=\"none\" x=\"14270\" y=\"12500\" width=\"2860\" height=\"2502\"/>     <path fill=\"rgb(255,0,0)\" stroke=\"none\" d=\"M 15592,12561 L 14288,14814 14284,14821 14281,14829 14278,14836 14276,14844 14274,14852 14272,14860 14272,14868 14271,14876 14272,14884 14272,14892 14274,14900 14276,14908 14278,14916 14281,14924 14284,14931 14288,14938 14292,14945 14297,14952 14302,14958 14308,14964 14314,14970 14320,14975 14327,14980 14333,14984 14341,14988 14348,14991 14356,14994 14364,14996 14371,14998 14379,14999 14388,15000 14396,15001 17004,15001 17012,15000 17021,14999 17029,14998 17037,14996 17044,14994 17052,14991 17059,14988 17067,14984 17073,14980 17080,14975 17086,14970 17092,14964 17098,14958 17103,14952 17108,14945 17112,14938 17116,14931 17119,14924 17122,14916 17124,14908 17126,14900 17128,14892 17128,14884 17129,14876 17128,14868 17128,14860 17126,14852 17124,14844 17122,14836 17119,14829 17116,14821 17112,14814 15808,12561 15804,12555 15799,12548 15794,12542 15788,12536 15782,12530 15776,12525 15769,12520 15763,12516 15755,12512 15748,12509 15740,12506 15733,12504 15725,12502 15717,12501 15709,12500 15700,12500 15691,12500 15683,12501 15675,12502 15667,12504 15660,12506 15652,12509 15645,12512 15637,12516 15631,12520 15624,12525 15618,12530 15612,12536 15606,12542 15601,12548 15596,12555 15592,12561 Z\"/>    </g>   </g>   <g class=\"com.sun.star.drawing.PolyPolygonShape\">    <g id=\"id4\">     <rect class=\"BoundingBox\" stroke=\"none\" fill=\"none\" x=\"14707\" y=\"12982\" width=\"1987\" height=\"1716\"/>     <path fill=\"rgb(255,255,255)\" stroke=\"none\" d=\"M 16693,14697 L 15701,12982 14707,14697 16693,14697 Z\"/>    </g>   </g>   <g class=\"com.sun.star.drawing.PolyPolygonShape\">    <g id=\"id5\">     <rect class=\"BoundingBox\" stroke=\"none\" fill=\"none\" x=\"15193\" y=\"13646\" width=\"829\" height=\"917\"/>     <path fill=\"rgb(0,0,0)\" stroke=\"none\" d=\"M 15667,14223 L 15681,14230 15695,14237 15709,14242 15724,14247 15739,14250 15754,14252 15770,14254 15785,14255 15801,14254 15816,14252 15831,14250 15846,14246 15861,14242 15875,14236 15890,14230 15903,14223 15916,14215 15929,14206 15941,14196 15952,14185 15963,14174 15972,14161 15981,14149 15989,14135 15997,14122 16003,14108 16009,14093 16013,14078 16016,14063 16019,14048 16021,14033 16021,14017 16021,13714 15920,13646 15819,13714 15819,14017 15818,14022 15817,14026 15816,14030 15814,14034 15812,14038 15809,14041 15805,14044 15802,14047 15798,14048 15794,14050 15789,14051 15785,14051 15780,14051 15776,14050 15772,14048 15768,14047 15549,13920 15535,13913 15521,13907 15506,13901 15491,13897 15476,13893 15461,13891 15446,13889 15430,13889 15415,13889 15400,13891 15384,13893 15369,13897 15355,13901 15340,13907 15326,13913 15312,13920 15299,13929 15287,13938 15274,13947 15262,13958 15252,13969 15242,13981 15233,13994 15225,14007 15218,14020 15211,14035 15206,14049 15201,14064 15198,14079 15195,14094 15194,14109 15193,14125 15193,14562 15296,14494 15397,14562 15397,14125 15397,14121 15398,14116 15399,14112 15401,14108 15404,14104 15407,14101 15410,14098 15414,14096 15418,14094 15422,14092 15426,14091 15431,14091 15435,14091 15439,14092 15444,14094 15447,14096 15667,14223 Z\"/>    </g>   </g>  </g> </svg>"
+  },
+  {
+    "id": "rs-warning-double-curve-right",
+    "name": "Double Curve Right First",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["curve", "double", "right", "A1d"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M13 23 C13 23 19 20 18 17 C17 14 12 13 13 10 C14 8 17 8 18 9\" stroke=\"#222\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-steep-descent",
+    "name": "Steep Descent",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["descent", "downhill", "A3"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M9 13 L23 22\" stroke=\"#222\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><text x=\"11\" y=\"25\" font-size=\"6\" fill=\"#222\" text-anchor=\"middle\">10%</text>"
+  },
+  {
+    "id": "rs-warning-steep-ascent",
+    "name": "Steep Ascent",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["ascent", "uphill", "A5"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M9 22 L23 13\" stroke=\"#222\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><text x=\"21\" y=\"25\" font-size=\"6\" fill=\"#222\" text-anchor=\"middle\">10%</text>"
+  },
+  {
+    "id": "rs-warning-road-narrows",
+    "name": "Road Narrows",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["narrow", "A7a"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M10 23 L13 15 L13 10 M22 23 L19 15 L19 10\" stroke=\"#222\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M13 10 L19 10\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-road-narrows-left",
+    "name": "Road Narrows Left",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["narrow", "left", "A7b"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M10 23 L14 15 L14 10 M22 23 L22 10\" stroke=\"#222\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M14 10 L22 10\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-road-narrows-right",
+    "name": "Road Narrows Right",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["narrow", "right", "A7c"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M10 23 L10 10 M22 23 L18 15 L18 10\" stroke=\"#222\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M10 10 L18 10\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-movable-bridge",
+    "name": "Movable Bridge",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["bridge", "A9"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M9 22 L9 16 L13 16 M23 22 L23 16 L19 16\" stroke=\"#222\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M13 16 L13 10 M19 16 L19 10\" stroke=\"#222\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><path d=\"M13 10 L16 13 L19 10\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-quay-edge",
+    "name": "Quay or River Bank",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["quay", "water", "A11"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M10 16 L22 16\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M16 10 L16 16\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"16,17 13,13 19,13\" fill=\"#222\"/><path d=\"M9 20 Q12 18 16 20 Q20 22 23 20\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M9 23 Q12 21 16 23 Q20 25 23 23\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-uneven-road",
+    "name": "Uneven Road / Speed Bump",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["bump", "uneven", "A14"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M9 20 L12 20 Q14 15 16 15 Q18 15 20 20 L23 20\" stroke=\"#222\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-slippery-road",
+    "name": "Slipper road",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["slippery", "ice", "A15"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M11 22 Q13 19 15 20 Q17 21 19 18 Q21 15 23 17\" stroke=\"#222\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M10 12 L10 16 M13 11 L11 15 M8 14 L12 14\" stroke=\"#222\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-falling-rocks",
+    "name": "Falling Rocks",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["rocks", "falling", "A19"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M12 9 L10 13 L14 13 Z\" fill=\"#222\"/><circle cx=\"17\" cy=\"12\" r=\"1.5\" fill=\"#222\"/><path d=\"M10 14 L11 18 M14 13 L14 17 M17 14 L16 18\" stroke=\"#222\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><path d=\"M8 22 L24 22\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8 22 L11 25 L24 22\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-cyclists",
+    "name": "Cyclist Crossing",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "People",
+    "tags": ["cyclist", "bike", "A25"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><circle cx=\"12\" cy=\"20\" r=\"3\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\"/><circle cx=\"21\" cy=\"20\" r=\"3\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\"/><path d=\"M12 20 L16 13 L21 20\" stroke=\"#222\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M16 13 L18 17\" stroke=\"#222\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"16\" cy=\"11\" r=\"1.8\" fill=\"#222\"/>"
+  },
+  {
+    "id": "rs-warning-railway-barrier",
+    "name": "Railway Crossing with Barriers",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Railway",
+    "tags": ["train", "railway", "barrier", "A41"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M16 9 L16 24\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M9 16 L16 16\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M16 16 L23 16\" stroke=\"#222\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"2,2\"/><path d=\"M9 13 L9 19 M23 13 L23 19\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-railway-no-barrier",
+    "name": "Railway Crossing without Barriers",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Railway",
+    "tags": ["train", "railway", "A43"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M16 9 L16 24\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M10 12 L22 20 M10 20 L22 12\" stroke=\"#222\" stroke-width=\"2.5\" stroke-linecap=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-two-way-traffic",
+    "name": "Two-Way Traffic",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Road",
+    "tags": ["two-way", "oncoming", "A39"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M13 23 L13 13\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"13,10 10,15 16,15\" fill=\"#222\"/><path d=\"M19 10 L19 20\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"19,23 16,18 22,18\" fill=\"#222\"/>"
+  },
+  {
+    "id": "rs-warning-crossroad",
+    "name": "Crossroad",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "Junction",
+    "tags": ["intersection"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><path d=\"M16 8 L16 22 M8 16 L24 16\" stroke=\"#222\" stroke-width=\"2\"/>"
+  },
+  {
+    "id": "rs-warning-pedestrian",
+    "name": "Pedestrian Crossing",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "People",
+    "tags": ["pedestrian"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><circle cx=\"16\" cy=\"12\" r=\"2\" fill=\"#222\"/><path d=\"M16 14 L16 20\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M12 17 L20 17\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M13 20 L16 20 L19 20\" stroke=\"#222\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M13 24 L16 20 L19 24\" stroke=\"#222\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  },
+  {
+    "id": "rs-warning-children",
+    "name": "Children",
+    "l1": "Road Signs",
+    "l2": "Warning",
+    "l3": "People",
+    "tags": ["school", "kids"],
+    "svgContent": "<polygon points=\"16,3 30,28 2,28\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/><circle cx=\"13\" cy=\"12\" r=\"1.8\" fill=\"#222\"/><path d=\"M13 14 L13 19\" stroke=\"#222\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M10 16.5 L16 16.5\" stroke=\"#222\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M10 23 L13 19 L16 23\" stroke=\"#222\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"20\" cy=\"12\" r=\"1.5\" fill=\"#222\"/><path d=\"M20 13.5 L20 18\" stroke=\"#222\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><path d=\"M17.5 15.5 L22.5 15.5\" stroke=\"#222\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><path d=\"M17.5 22.5 L20 18 L22.5 22.5\" stroke=\"#222\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  }
+]

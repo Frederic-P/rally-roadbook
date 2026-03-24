@@ -1,0 +1,20 @@
+[
+  {
+    "id": "rs-priority-main",
+    "name": "Priority Road",
+    "l1": "Road Signs",
+    "l2": "Priority",
+    "l3": "Right of Way",
+    "tags": ["priority"],
+    "svgContent": "<polygon points=\"16,4 28,16 16,28 4,16\" fill=\"#f1c40f\" stroke=\"#222\" stroke-width=\"2\"/>"
+  },
+  {
+    "id": "rs-priority-yield",
+    "name": "Yield",
+    "l1": "Road Signs",
+    "l2": "Priority",
+    "l3": "Right of Way",
+    "tags": ["yield"],
+    "svgContent": "<polygon points=\"16,28 4,6 28,6\" fill=\"white\" stroke=\"#c0392b\" stroke-width=\"3\"/>"
+  }
+]

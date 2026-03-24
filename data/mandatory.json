@@ -1,0 +1,29 @@
+[
+  {
+    "id": "rs-mandatory-straight",
+    "name": "Straight Ahead",
+    "l1": "Road Signs",
+    "l2": "Mandatory",
+    "l3": "Direction",
+    "tags": ["forward"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" fill=\"#1f4aa8\"/><path d=\"M16 22 L16 10\" stroke=\"white\" stroke-width=\"3\"/>"
+  },
+  {
+    "id": "rs-mandatory-left",
+    "name": "Turn Left",
+    "l1": "Road Signs",
+    "l2": "Mandatory",
+    "l3": "Direction",
+    "tags": ["left"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" fill=\"#1f4aa8\"/><path d=\"M20 22 Q12 16 12 10\" stroke=\"white\" stroke-width=\"3\"/>"
+  },
+  {
+    "id": "rs-mandatory-roundabout",
+    "name": "Roundabout",
+    "l1": "Road Signs",
+    "l2": "Mandatory",
+    "l3": "Junction",
+    "tags": ["roundabout"],
+    "svgContent": "<circle cx=\"16\" cy=\"16\" r=\"12\" fill=\"#1f4aa8\"/><circle cx=\"16\" cy=\"16\" r=\"5\" stroke=\"white\" fill=\"none\"/>"
+  }
+]
