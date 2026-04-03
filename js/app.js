@@ -373,6 +373,7 @@ class App {
 
   /* Clear when starting a new route: */
   _clearAll() {
+    //BUG: does not clear the drawn routes produced by the overpass api
     this.viaPoints.forEach(v => { if (v.marker) this.routeManager.map.removeLayer(v.marker); });
     this.viaPoints = [];
     this.routeManager.clearRoute();   // this DOES clear waypoint markers (intentional full reset)

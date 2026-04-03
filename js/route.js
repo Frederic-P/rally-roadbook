@@ -34,10 +34,52 @@ class RouteManager {
   }
 
   _initMap(mapEl) {
-    this.map = L.map(mapEl, { center: [50.88, 4.7], zoom: 10, zoomControl: true });
+    const FALLBACK = [43.7394, 7.4275]; // Monaco Casino square as fallback.
+
+    // Resolve the container element whether mapEl is an id string or an element
+    const container = (typeof mapEl === 'string')
+      ? document.getElementById(mapEl)
+      : mapEl;
+
+    // Hide the map until we know where to centre it
+    if (container) container.style.visibility = 'hidden';
+
+    this.map = L.map(container || mapEl, {
+      center: FALLBACK,
+      zoom: 13,
+      zoomControl: true
+    });
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors || RallyRoadbookCreator', maxZoom: 19
+      attribution: '© OpenStreetMap contributors || RallyRoadbookCreator',
+      maxZoom: 19
     }).addTo(this.map);
+
+    // Reveal the map centred on the resolved location
+    const revealMap = (center, zoom) => {
+      this.map.setView(center, zoom);
+      if (container) container.style.visibility = 'visible';
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          revealMap([position.coords.latitude, position.coords.longitude], 13);
+        },
+        (error) => {
+          console.warn('Geolocation failed or denied:', error);
+          revealMap(FALLBACK, 13);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      // Geolocation API not available
+      revealMap(FALLBACK, 13);
+    }
 
     this.map.on('click', e => {
       if (this._pickMode) this._handleMapPick(e.latlng);
