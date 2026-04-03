@@ -1,8 +1,9 @@
 class App {
   constructor() {
     this.appVersion = '0.0.0'; 
+    this.FALLBACK = [43.7394, 7.4275];
 
-    this.routeManager  = new RouteManager(document.getElementById('map'));
+    this.routeManager  = new RouteManager(document.getElementById('map'), this.FALLBACK);
     this.wpManager     = new WaypointManager();
     this.editorUI      = new WaypointEditorUI(this.wpManager);
     this.exportManager = new ExportManager(this.wpManager, this.routeManager);
@@ -373,10 +374,18 @@ class App {
 
   /* Clear when starting a new route: */
   _clearAll() {
-    //BUG: does not clear the drawn routes produced by the overpass api
+    //FULL RESET
     this.viaPoints.forEach(v => { if (v.marker) this.routeManager.map.removeLayer(v.marker); });
     this.viaPoints = [];
-    this.routeManager.clearRoute();   // this DOES clear waypoint markers (intentional full reset)
+
+    // PATCH: removes all drawn route lines of waypoint illustrations.
+    this.wpManager.waypoints.forEach(wp => {
+      (wp.stencilPaths || []).forEach(sp => {
+        if (sp.mapLine) this.routeManager.map.removeLayer(sp.mapLine);
+      });
+    });
+
+    this.routeManager.clearRoute();
     this.wpManager.waypoints = [];
     this.startLabel = '';
     this.endLabel   = '';
@@ -386,6 +395,19 @@ class App {
     this.refreshWaypointList();
     this._updateStats();
     this._saveToStorage();
+    if (this.editorUI) this.editorUI.close();  //Close modal if open
+    this.wpManager.currentIndex = null; //Reset
+    // Reset map view to user's location, mirroring the initial _initMap behaviour
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos  => this.routeManager.map.setView([pos.coords.latitude, pos.coords.longitude], 13, { animate: true }),
+        _err => this.routeManager.map.setView(this.FALLBACK, 13, { animate: true }),
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      this.routeManager.map.setView(this.FALLBACK, 13, { animate: true });
+    }
+
   }
 
   /* use local browser storage: let the user resume when tehy revisit later. */

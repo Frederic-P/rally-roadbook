@@ -9,7 +9,8 @@
  */
 
 class RouteManager {
-  constructor(mapEl) {
+  constructor(mapEl, fallback) {
+    this.FALLBACK = fallback;
     this.map = null;
     this.waypointMarkers = [];
     this.viaPoints       = [];
@@ -34,7 +35,6 @@ class RouteManager {
   }
 
   _initMap(mapEl) {
-    const FALLBACK = [43.7394, 7.4275]; // Monaco Casino square as fallback.
 
     // Resolve the container element whether mapEl is an id string or an element
     const container = (typeof mapEl === 'string')
@@ -45,7 +45,7 @@ class RouteManager {
     if (container) container.style.visibility = 'hidden';
 
     this.map = L.map(container || mapEl, {
-      center: FALLBACK,
+      center: this.FALLBACK,
       zoom: 13,
       zoomControl: true
     });
@@ -68,7 +68,7 @@ class RouteManager {
         },
         (error) => {
           console.warn('Geolocation failed or denied:', error);
-          revealMap(FALLBACK, 13);
+          revealMap(this.FALLBACK, 13);
         },
         {
           enableHighAccuracy: true,
@@ -78,7 +78,7 @@ class RouteManager {
       );
     } else {
       // Geolocation API not available
-      revealMap(FALLBACK, 13);
+      revealMap(this.FALLBACK, 13);
     }
 
     this.map.on('click', e => {

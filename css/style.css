@@ -720,7 +720,6 @@ input[type="color"] {
   color: #fff;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
-  opacity: 0;
 }
 
 .toast-notification.success {
@@ -733,22 +732,20 @@ input[type="color"] {
 
 @keyframes toast-in {
   from {
-    transform: translateX(100%);
     opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: translateX(0);
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes toast-out {
   from {
-    transform: translateX(0);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
     opacity: 0;
   }
 }

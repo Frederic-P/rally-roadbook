@@ -4,8 +4,6 @@
 4) write documentation and quickstart guide
 5) Add version as superglobal and use that in export/import feature
 6) Replace Confirm/Alert/Prompt with proper modal boxes. 
-7) Fix TOAST notification when querying overpass API
 8) See if you can find a way when using Auto draw feature to not draw roads that are not connected to the rest of the illustration.
-9) BUG: New route does not clear auto-draw content
 10) Rationalize intermittent distance points both in UI and in export. Reduce to 2 metrics (yellow dot to yellow dot AND start to shown yellow dot.)
 11) Bolletje is not always connected to waypoint illustration 
