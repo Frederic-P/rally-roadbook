@@ -201,8 +201,12 @@ class StencilManager {
       .then(data => {
         const ways = data.elements || [];
         const near = wp.nearCoords || {};
-        const routeCoords = new Set((near.before || []).concat(near.after || []).map(c => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`));
+        const routePoints = (near.before || []).concat(near.after || []);
+        const routeCoords = new Set(routePoints.map(c => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`));
         let addedCount = 0;
+
+        // Threshold (meters) to consider a stencilled part "connected" to the route
+        const connectionThresholdMeters = 12;
 
         ways.forEach(way => {
           if (way.geometry && way.geometry.length > 0) {
@@ -211,9 +215,27 @@ class StencilManager {
 
             clippedParts.forEach(part => {
               if (part.length < 2) return;
-              addedCount++;
+
               const isRoundabout = (way.tags && way.tags.junction) === 'roundabout';
               const isRoute = part.some(c => routeCoords.has(`${c.lat.toFixed(5)},${c.lng.toFixed(5)}`));
+
+              // If the part doesn't directly contain a route node, test proximity
+              // to the route coordinates. Skip parts that are not connected.
+              let isConnected = isRoute;
+              if (!isConnected && routePoints.length > 0) {
+                outer: for (let i = 0; i < part.length; i++) {
+                  for (let j = 0; j < routePoints.length; j++) {
+                    if (part[i].distanceTo(routePoints[j]) <= connectionThresholdMeters) {
+                      isConnected = true;
+                      break outer;
+                    }
+                  }
+                }
+              }
+
+              if (!isConnected) return; // do not add stray/unconnected roads
+
+              addedCount++;
               const sp = { coords: part, isRoundabout, isRoute, mapLine: null };
               if (!this._wp.stencilPaths) this._wp.stencilPaths = [];
               this._wp.stencilPaths.push(sp);
