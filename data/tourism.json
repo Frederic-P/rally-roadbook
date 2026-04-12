@@ -1,0 +1,20 @@
+[  
+    {
+        "id": "scenic-view-point",
+        "name": "View Point",
+        "l1": "Tourism",
+        "l2": "Landmark",
+        "l3": "Viewpoint",
+        "tags": ["viewpoint", "scenic", "photo"],
+        "svgContent": ""
+    }, 
+    {
+        "id": "",
+        "name": "",
+        "l1": "Tourism",
+        "l2": "",
+        "l3": "",
+        "tags": [],
+        "svgContent": ""
+    }
+]

@@ -636,7 +636,6 @@ class WaypointEditorUI {
     this.panel        = document.getElementById('wp-editor-overlay');
     this.svgEl        = document.getElementById('wp-svg');
     this.commentEl    = document.getElementById('wp-comment');
-    this.distABEl     = document.getElementById('dist-ab');
     this.distPrevEl   = document.getElementById('dist-prev');
     this.distTotalEl  = document.getElementById('dist-total');
     this.iconTree     = document.getElementById('icon-tree');
@@ -863,7 +862,6 @@ class WaypointEditorUI {
     }
 
     this.commentEl.value   = wp.comment || '';
-    this.distABEl.value    = this.wpManager.formatDistance(wp.distAB);
     this.distPrevEl.value  = this.wpManager.formatDistance(wp.distFromPrev);
     this.distTotalEl.value = this.wpManager.formatDistance(wp.distTotal);
 

@@ -321,7 +321,10 @@ class RouteManager {
       const distFromPrev = prevInstr
         ? (distUpTo[cIdx] - distUpTo[prevInstr.index])
         : distUpTo[cIdx];
-      const distTotal    = distUpTo[cIdx] + distAB;
+      // distTotal = distance from start to THIS waypoint dot (the yellow dot).
+      // distAB (the forward leg after the dot) is retained internally for
+      // recalculating distFromPrev on the next step, but is no longer exposed in the UI.
+      const distTotal    = distUpTo[cIdx];
 
       steps.push({
         coordIdx: cIdx,

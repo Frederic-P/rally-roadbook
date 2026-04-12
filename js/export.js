@@ -46,7 +46,7 @@ class ExportManager {
     const cols = [
       { label: '#',               w: 10 },
       { label: 'Illustration',    w: 55 },
-      { label: 'A -> B',          w: 26 },
+      { label: 'Since prev',      w: 26 },
       { label: 'Total',           w: 26 },
       { label: 'Comment / Notes', w: 78 },
     ];
@@ -135,7 +135,7 @@ class ExportManager {
       doc.setTextColor(40, 40, 60);
       const fmt = v => this.wpManager.formatDistance(v);
       const distCols = [
-        { idx: 2, val: fmt(wp.distAB) },
+        { idx: 2, val: fmt(wp.distFromPrev) },
         { idx: 3, val: fmt(wp.distTotal) }
       ];
       distCols.forEach(d => {

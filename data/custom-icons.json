@@ -24,7 +24,7 @@
     {
       "id": "custom-bridge",
       "name": "Bridge",
-      "description": "Bridge crossing — check height/weight limits",
+      "description": "Bridge crossing",
       "l1": "Hazards",
       "l2": "Infrastructure",
       "l3": "Structures",
