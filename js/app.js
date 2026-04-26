@@ -11,29 +11,33 @@ class App {
     this._routeWindow = new RouteWindowManager(this.routeManager.map, () => {});
     this.editorUI.setRouteWindowManager(this._routeWindow);
 
-    // StencilManager lives on the map; wire into the editor
     this._stencilMgr = new StencilManager(this.routeManager.map);
     this.editorUI.setStencilManager(this._stencilMgr);
 
-    this.viaPoints  = [];
+    this.viaPoints    = [];
+    this.viaEditor    = new ViaEditorPanel();
+    this.liveRecalc   = true;
     this.startLabel = '';
     this.endLabel   = '';
 
-    // Shared marker-click handler — always the same reference
+    // Via section expand/collapse state
+    this._viaExpanded = false;
+
+    // Drag-to-reorder state
+    this._dragSrcIdx = null;
+
     this._markerClickFn = (clickedWP) => {
       const idx = this.wpManager.waypoints.indexOf(clickedWP);
       if (idx !== -1) this._openWaypoint(idx);
     };
 
-    // Shared marker-contextmenu handler (Right Click)
     this._markerRightClickFn = (clickedWP, event) => {
       this._showWaypointContextMenu(clickedWP, event.latlng);
     };
 
-    // Wire double-click on route line -> add waypoint
-    this.routeManager.onRouteLineDblClick = (latlng) => this._onRouteLineDblClick(latlng);
+    this.routeManager.onRouteLineDblClick  = (latlng) => this._onRouteLineDblClick(latlng);
     this.routeManager.onRouteLineRightClick = (latlng) => this._onRouteLineDblClick(latlng);
-    this.routeManager.onViaDragEnd        = (latlng) => this._onViaDragEnd(latlng);
+    this.routeManager.onViaDragEnd         = (latlng) => this._onViaDragEnd(latlng);
 
     window.routeManager = this.routeManager;
     window.app = this;
@@ -42,14 +46,18 @@ class App {
     this._loadFromStorage();
   }
 
-  /* UI BINDINGS */
+  /* ============================================================
+     UI BINDINGS
+     ============================================================ */
   _bindUI() {
+    // Start / End keyboard submit
     ['input-start', 'input-end'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
         if (e.key === 'Enter') this._calcRoute();
       });
     });
 
+    // Start / End map-pick
     document.getElementById('btn-pick-start').addEventListener('click', () => {
       this.routeManager.startPickMode('start', async (mode, latlng) => {
         const label = await this.routeManager.reverseGeocode(latlng);
@@ -70,16 +78,71 @@ class App {
 
     document.getElementById('btn-calc-route').addEventListener('click', () => this._calcRoute());
 
-    document.getElementById('btn-add-via').addEventListener('click', () => {
-      this.routeManager.startPickMode('via', async (mode, latlng) => {
-        await this._addViaPoint(latlng);
-      });
+    // Live-recalc toggle
+    document.getElementById('live-recalc').addEventListener('change', (e) => {
+      this.liveRecalc = e.target.checked;
     });
 
+    // Via section expand/collapse
+    document.getElementById('via-toggle').addEventListener('click', () => {
+      this._viaExpanded = !this._viaExpanded;
+      document.getElementById('via-body').classList.toggle('hidden', !this._viaExpanded);
+      document.getElementById('via-toggle-arrow').textContent = this._viaExpanded ? '▼' : '▶';
+    });
+
+    // Add via by address — show input row
+    document.getElementById('btn-add-via-address').addEventListener('click', () => {
+      this._expandVia();
+      document.getElementById('via-add-row').classList.remove('hidden');
+      document.getElementById('via-address-input').focus();
+    });
+
+    // Add via by map pick — sticky mode, stays armed until Escape or Done
+    document.getElementById('btn-add-via-map').addEventListener('click', () => {
+      this._expandVia();
+      this._startStickyViaPick();
+    });
+
+    // Confirm address via
+    document.getElementById('btn-via-address-confirm').addEventListener('click', () => {
+      this._commitViaAddress();
+    });
+    document.getElementById('via-address-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') this._commitViaAddress();
+      if (e.key === 'Escape') this._cancelViaAddress();
+    });
+    document.getElementById('btn-via-address-cancel').addEventListener('click', () => {
+      this._cancelViaAddress();
+    });
+
+    // Optimize via order
+    document.getElementById('btn-optimize-via').addEventListener('click', async () => {
+      if (this.viaPoints.length < 2) return;
+      this._showLoading('Optimizing via order…');
+      try {
+        const start = this.routeManager.startPoint;
+        if (!start || !this.routeManager.routeCoords) {
+          alert('Need route first.');
+          return;
+        }
+        this.viaPoints.sort((a, b) => {
+          const da = this.routeManager.map.distance(start, a.latlng);
+          const db = this.routeManager.map.distance(start, b.latlng);
+          return da - db;
+        });
+        this._renderViaList();
+        await this._calcRoute();
+      } finally {
+        this._hideLoading();
+      }
+    });
+
+    // New Route
     document.getElementById('btn-new-route').addEventListener('click', () => {
       if (confirm('Start a new route? All unsaved data will be cleared.')) this._clearAll();
     });
 
+    // Export / Import
     document.getElementById('btn-save-zip').addEventListener('click', () => {
       if (!this.wpManager.getAll().length) { alert('No route yet.'); return; }
       this._showLoading('Generating ZIP…');
@@ -122,7 +185,75 @@ class App {
     });
   }
 
-  /*  DOUBLE-CLICK ON ROUTE LINE -> add manual waypoint */
+  /* ============================================================
+     VIA ADDRESS INPUT HELPERS
+     ============================================================ */
+  _startStickyViaPick() {
+    // Update indicator text to show Done button
+    const indicator = document.getElementById('map-mode-indicator');
+    indicator.innerHTML = `
+      Adding via points — click map to place &nbsp;
+      <button id="btn-via-pick-done" style="
+        background:#f5a623;color:#1a1a2e;border:none;border-radius:4px;
+        padding:3px 10px;font-weight:700;font-size:12px;cursor:pointer;margin-left:4px;
+      ">Done</button>
+    `;
+    indicator.classList.remove('hidden');
+
+    document.getElementById('btn-via-pick-done').addEventListener('click', () => {
+      this.routeManager.stopPickMode();
+      indicator.innerHTML = 'Click on map to set point';
+    });
+
+    // Escape key also exits
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        this.routeManager.stopPickMode();
+        indicator.innerHTML = 'Click on map to set point';
+        document.removeEventListener('keydown', onKey);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
+    this.routeManager.startPickMode('via-sticky', async (mode, latlng) => {
+      const label = await this.routeManager.reverseGeocode(latlng);
+      await this._addViaPoint(latlng, label, false); // no auto-recalc per click
+    });
+  }
+
+  _expandVia() {
+    if (!this._viaExpanded) {
+      this._viaExpanded = true;
+      document.getElementById('via-body').classList.remove('hidden');
+      document.getElementById('via-toggle-arrow').textContent = '▼';
+    }
+  }
+
+  async _commitViaAddress() {
+    const input = document.getElementById('via-address-input');
+    const query = input.value.trim();
+    if (!query) return;
+    this._showLoading('Geocoding via point…');
+    try {
+      const latlng = await this.routeManager.geocode(query);
+      await this._addViaPoint(latlng, query, this.liveRecalc);
+      input.value = '';
+      document.getElementById('via-add-row').classList.add('hidden');
+    } catch (err) {
+      alert('Address not found: ' + (err.message || err));
+    } finally {
+      this._hideLoading();
+    }
+  }
+
+  _cancelViaAddress() {
+    document.getElementById('via-address-input').value = '';
+    document.getElementById('via-add-row').classList.add('hidden');
+  }
+
+  /* ============================================================
+     DOUBLE-CLICK ON ROUTE LINE -> add manual waypoint
+     ============================================================ */
   async _onRouteLineDblClick(latlng) {
     const coords     = this.routeManager.routeCoords;
     const nearIdx    = this.routeManager._nearestCoordIdx(latlng);
@@ -156,7 +287,6 @@ class App {
     this.wpManager.waypoints.splice(insertAt, 0, wp);
     this.wpManager._reindex();
 
-    // Place this single new marker directly — no full restore needed
     this.routeManager.placeWaypointMarker(wp, this._markerClickFn, this._markerRightClickFn);
 
     this.refreshWaypointList();
@@ -173,60 +303,286 @@ class App {
     return d;
   }
 
-  /* VIA PONTS
-  //TODO; via points need addresses at some point
-  //TODO: smarter viapoints
-  */
-  async _onViaDragEnd(latlng) { await this._addViaPoint(latlng, true); }
+  /* ============================================================
+     VIA POINTS
+     ============================================================ */
+  async _onViaDragEnd(latlng) {
+    // Route-line drag creates a temporary via — add with recalc
+    const label = await this.routeManager.reverseGeocode(latlng);
+    await this._addViaPoint(latlng, label, true);
+  }
 
-  async _addViaPoint(latlng, fromDrag = false) {
-    const label = fromDrag
-      ? `Via ${this.viaPoints.length + 1}`
-      : await this.routeManager.reverseGeocode(latlng);
+  /**
+   * Add a via point.
+   * @param {L.LatLng} latlng
+   * @param {string}   label       — display label (address string)
+   * @param {boolean}  doRecalc    — whether to immediately recalculate the route
+   */
+  async _addViaPoint(latlng, label, doRecalc = false) {
+    // Determine insertion index by projected distance from start
+    let projectedDist = Infinity;
+    if (this.routeManager.routeCoords && this.routeManager.routeCoords.length > 1) {
+      const nearIdx = this._nearestCoordIdxForLatLng(latlng);
+      projectedDist = this._estimateDistToCoord(nearIdx);
+    }
 
-    const viaIcon = L.divIcon({
-      className: '',
-      html: `<div style="width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #aaa;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-      iconSize: [12, 12], iconAnchor: [6, 6]
+    const insertIdx = this.viaPoints.findIndex(v => {
+      const nearIdx = this._nearestCoordIdxForLatLng(v.latlng);
+      const vDist   = this._estimateDistToCoord(nearIdx);
+      return projectedDist < vDist;
     });
-    const marker = L.marker(latlng, { icon: viaIcon, draggable: true, zIndexOffset: 300 })
-      .addTo(this.routeManager.map);
+    const idx = insertIdx === -1 ? this.viaPoints.length : insertIdx;
+
+    const marker = this._createViaMarker(latlng, idx + 1);
 
     marker.on('dragend', async () => {
-      const idx = this.viaPoints.findIndex(v => v.marker === marker);
-      if (idx !== -1) {
-        this.viaPoints[idx].latlng = marker.getLatLng();
-        await this._calcRoute();
+      const i = this.viaPoints.findIndex(v => v.marker === marker);
+      if (i !== -1) {
+        this.viaPoints[i].latlng = marker.getLatLng();
+        this._renumberViaMarkers();
+        this._renderViaList();
+        if (this.liveRecalc) await this._calcRoute();
       }
     });
 
     marker.on('contextmenu', async () => {
-      const idx = this.viaPoints.findIndex(v => v.marker === marker);
-      if (idx !== -1) {
+      const i = this.viaPoints.findIndex(v => v.marker === marker);
+      if (i !== -1) {
         this.routeManager.map.removeLayer(marker);
-        this.viaPoints.splice(idx, 1);
+        this.viaPoints.splice(i, 1);
+        this._renumberViaMarkers();
         this._renderViaList();
-        await this._calcRoute();
+        this._updateViaBadge();
+        if (this.liveRecalc) await this._calcRoute();
       }
     });
 
-    this.viaPoints.push({ latlng, label, marker });
+    this.viaPoints.splice(idx, 0, { latlng, label, marker, note: '', includeInPDF: false });
+    this._renumberViaMarkers();
     this._renderViaList();
-    await this._calcRoute();
+    this._updateViaBadge();
+
+    if (doRecalc && this.liveRecalc) {
+      await this._calcRoute();
+    }
   }
 
-  /* OPEN WAYPOINT EDITOR */
+  _nearestCoordIdxForLatLng(latlng) {
+    if (!this.routeManager.routeCoords || !this.routeManager.routeCoords.length) return 0;
+    const coords = this.routeManager.routeCoords;
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < coords.length; i++) {
+      const d = this.routeManager.map.distance(latlng, coords[i]);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return best;
+  }
+
+  /**
+   * Create a numbered circle marker for a via point.
+   */
+  _createViaMarker(latlng, num) {
+    const icon = this._viaIcon(num);
+    const marker = L.marker(latlng, { icon, draggable: true, zIndexOffset: 300 })
+      .addTo(this.routeManager.map);
+    return marker;
+  }
+
+  _viaIcon(num) {
+    return L.divIcon({
+      className: 'via-number-icon',
+      html: `<div style="width:22px;height:22px;border-radius:50%;background:#1e3a8a;color:#fff;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${num}</div>`,
+      iconSize: [22, 22], iconAnchor: [11, 11]
+    });
+  }
+
+  /** Update all via markers' icons so their numbers stay in sync with array order */
+  _renumberViaMarkers() {
+    this.viaPoints.forEach((v, i) => {
+      if (v.marker) {
+        v.marker.setIcon(this._viaIcon(i + 1));
+      }
+    });
+  }
+
+  /** Update the count badge on the "Via Points" toggle button */
+  _updateViaBadge() {
+    const badge = document.getElementById('via-count-badge');
+    const count = this.viaPoints.length;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
+  /* ============================================================
+     RENDER VIA LIST (sortable by drag-handle)
+     ============================================================ */
+  _renderViaList() {
+    const list = document.getElementById('via-points-list');
+    list.innerHTML = '';
+    this._updateViaBadge();
+
+    this.viaPoints.forEach((v, i) => {
+      const item = document.createElement('div');
+      item.className = 'via-item';
+      item.draggable = true;
+      item.dataset.idx = i;
+
+      // ── Numbered badge — click to pan map ──
+      const badge = document.createElement('div');
+      badge.className = 'via-num-badge';
+      badge.textContent = i + 1;
+      badge.title = 'Click to centre map here';
+      badge.style.cursor = 'pointer';
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.routeManager.map.setView(v.latlng, 16, { animate: true });
+      });
+
+      // ── Drag handle ──
+      const handle = document.createElement('span');
+      handle.className = 'via-drag-handle';
+      handle.title = 'Drag to reorder';
+      handle.innerHTML = '⠿';
+
+      // ── Editable label ──
+      const labelContainer = document.createElement('div');
+      labelContainer.className = 'via-label-container';
+      labelContainer.style.flex = '1';
+
+      const span = document.createElement('span');
+      span.contentEditable = true;
+      const displayLabel = v.label.length > 30 ? v.label.substring(0, 30) + '…' : v.label;
+      span.textContent = displayLabel;
+      span.title = v.label;
+      span.addEventListener('blur', () => {
+        const newLabel = span.textContent.trim() || `Via ${i + 1}`;
+        v.label = newLabel;
+        span.title = newLabel;
+        this._saveToStorage();
+      });
+      span.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { span.blur(); e.preventDefault(); }
+      });
+      labelContainer.appendChild(span);
+
+      // ── PDF indicator dot (shown when includeInPDF is true) ──
+      const pdfDot = document.createElement('span');
+      pdfDot.title = 'Included in PDF';
+      pdfDot.style.cssText = [
+        'width:7px', 'height:7px', 'border-radius:50%',
+        'background:var(--accent,#f5a623)', 'flex-shrink:0',
+        'display:inline-block', 'margin-left:4px',
+        v.includeInPDF ? '' : 'visibility:hidden'
+      ].join(';');
+      pdfDot.id = `via-pdf-dot-${i}`;
+
+      // ── Edit button — opens ViaEditorPanel ──
+      const editBtn = document.createElement('button');
+      editBtn.className = 'via-edit-btn';
+      editBtn.title = 'Edit note & PDF options';
+      editBtn.innerHTML = '✎';
+      editBtn.style.cssText = [
+        'background:none', 'border:1px solid var(--border,#2a3048)',
+        'color:var(--text-muted,#8888aa)', 'border-radius:4px',
+        'padding:2px 6px', 'font-size:13px', 'cursor:pointer',
+        'line-height:1.4', 'flex-shrink:0',
+        'transition:color 0.15s, border-color 0.15s'
+      ].join(';');
+      editBtn.addEventListener('mouseenter', () => {
+        editBtn.style.color = 'var(--accent,#f5a623)';
+        editBtn.style.borderColor = 'var(--accent,#f5a623)';
+      });
+      editBtn.addEventListener('mouseleave', () => {
+        editBtn.style.color = 'var(--text-muted,#8888aa)';
+        editBtn.style.borderColor = 'var(--border,#2a3048)';
+      });
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.viaEditor.open(v, i + 1, () => {
+          // Update the PDF dot visibility whenever the panel saves
+          const dot = document.getElementById(`via-pdf-dot-${i}`);
+          if (dot) dot.style.visibility = v.includeInPDF ? 'visible' : 'hidden';
+          this._saveToStorage();
+        });
+      });
+
+      // ── Remove button ──
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'via-remove';
+      removeBtn.title = 'Remove';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', async () => {
+        if (v.marker) this.routeManager.map.removeLayer(v.marker);
+        this.viaPoints.splice(i, 1);
+        this._renumberViaMarkers();
+        this._renderViaList();
+        if (this.liveRecalc) await this._calcRoute();
+      });
+
+      item.appendChild(badge);
+      item.appendChild(handle);
+      item.appendChild(labelContainer);
+      item.appendChild(pdfDot);
+      item.appendChild(editBtn);
+      item.appendChild(removeBtn);
+
+      // ── Drag-to-reorder events ──
+      item.addEventListener('dragstart', e => {
+        this._dragSrcIdx = i;
+        e.dataTransfer.effectAllowed = 'move';
+        item.classList.add('via-dragging');
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('via-dragging');
+        list.querySelectorAll('.via-item').forEach(el => el.classList.remove('via-drag-over'));
+      });
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        list.querySelectorAll('.via-item').forEach(el => el.classList.remove('via-drag-over'));
+        item.classList.add('via-drag-over');
+      });
+      item.addEventListener('drop', async e => {
+        e.preventDefault();
+        item.classList.remove('via-drag-over');
+        const srcIdx = this._dragSrcIdx;
+        const dstIdx = parseInt(item.dataset.idx, 10);
+        if (srcIdx === null || srcIdx === dstIdx) return;
+
+        const [moved] = this.viaPoints.splice(srcIdx, 1);
+        this.viaPoints.splice(dstIdx, 0, moved);
+        this._dragSrcIdx = null;
+
+        this._renumberViaMarkers();
+        this._renderViaList();
+        if (this.liveRecalc) await this._calcRoute();
+        else this._saveToStorage();
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  /* ============================================================
+     OPEN WAYPOINT EDITOR
+     ============================================================ */
   _openWaypoint(index) { this.editorUI.open(index); }
 
-  /* Route calcuation */
+  /* ============================================================
+     ROUTE CALCULATION
+     ============================================================ */
   async _calcRoute() {
     let start      = this.routeManager.startPoint;
     let end        = this.routeManager.endPoint;
     const startInput = document.getElementById('input-start').value.trim();
     const endInput   = document.getElementById('input-end').value.trim();
 
-    if (!start && !startInput) { alert('Please set a start point.'); return; }  //TODO remove alert() and use modal
-    if (!end   && !endInput)   { alert('Please set an end point.');   return; } //TODO remove alert() and use modal
+    if (!start && !startInput) { alert('Please set a start point.'); return; }
+    if (!end   && !endInput)   { alert('Please set an end point.');   return; }
 
     this._showLoading('Calculating route…');
 
@@ -244,21 +600,21 @@ class App {
 
       const viaLatLngs = this.viaPoints.map(v => v.latlng);
 
-      // Snapshot existing annotations before route wipes step data
       const existingWPs = this.wpManager.serialize();
       this.wpManager.waypoints = [];
 
-      // calculateRoute() only redraws the line + endpoint flags
-      // It does NOT touch waypoint markers
       const steps = await this.routeManager.calculateRoute(start, end, viaLatLngs);
 
-      // Rebuild waypoint list, restoring saved annotations
-      steps.forEach((s, i) => {
+      // Filter out trivial steps that sit on via-points (no nav action needed)
+      const filteredSteps = steps.filter(s => !s.isViaPassthrough);
+
+      filteredSteps.forEach((s, i) => {
         const wp    = this.wpManager.createFromStep(s, i);
         const match = existingWPs.find(e =>
           e.latlng && wp.latlng &&
           Math.abs(e.latlng.lat - wp.latlng.lat) < 0.0002 &&
-          Math.abs(e.latlng.lng - wp.latlng.lng) < 0.0002
+          Math.abs(e.latlng.lng - wp.latlng.lng) < 0.0002 &&
+          Math.abs((e.distTotal || 0) - (wp.distTotal || 0)) < 50
         );
         if (match) {
           wp.comment           = match.comment;
@@ -268,10 +624,6 @@ class App {
         this.wpManager.addWaypoint(wp);
       });
 
-      // Also restore any manually-added waypoints that aren't route steps
-      // (matched by proximity; already handled above if they were preserved)
-
-      // Re-place ALL markers in one shot — this is the only place markers are (re)created
       this.routeManager.restoreWaypointMarkers(
         this.wpManager.getAll(),
         this._markerClickFn,
@@ -285,35 +637,15 @@ class App {
 
     } catch (err) {
       console.error(err);
-      alert('Route error: ' + (err.message || err));    //TODO remove alert() and use modal
+      alert('Route error: ' + (err.message || err));
     } finally {
       this._hideLoading();
     }
   }
 
-  /* List of via points. */
-  _renderViaList() {
-    const list = document.getElementById('via-points-list');
-    list.innerHTML = '';
-    this.viaPoints.forEach((v, i) => {
-      const item = document.createElement('div');
-      item.className = 'via-item';
-      const label = v.label.length > 28 ? v.label.substring(0, 28) + '…' : v.label;
-      item.innerHTML = `
-        <span title="${v.label}">${label}</span>
-        <button class="via-remove" title="Remove">✕</button>
-      `;
-      item.querySelector('.via-remove').addEventListener('click', async () => {
-        if (v.marker) this.routeManager.map.removeLayer(v.marker);
-        this.viaPoints.splice(i, 1);
-        this._renderViaList();
-        await this._calcRoute();
-      });
-      list.appendChild(item);
-    });
-  }
-
-  /* List of route actions (waypoints) */
+  /* ============================================================
+     WAYPOINT LIST
+     ============================================================ */
   refreshWaypointList() {
     const list  = document.getElementById('waypoints-list');
     const count = document.getElementById('wp-count');
@@ -344,7 +676,9 @@ class App {
   showIconProps(props) { this.editorUI.showIconProps(props); }
   hideIconProps()      { this.editorUI.hideIconProps(); }
 
-  /* modify waypoints on mouse clicks. */
+  /* ============================================================
+     WAYPOINT CONTEXT MENU (right-click on marker)
+     ============================================================ */
   _showWaypointContextMenu(wp, latlng) {
     const container = document.createElement('div');
     const btn = document.createElement('button');
@@ -372,13 +706,16 @@ class App {
     this._saveToStorage();
   }
 
-  /* Clear when starting a new route: */
+  /* ============================================================
+     CLEAR ALL
+     ============================================================ */
   _clearAll() {
-    //FULL RESET
     this.viaPoints.forEach(v => { if (v.marker) this.routeManager.map.removeLayer(v.marker); });
     this.viaPoints = [];
 
-    // PATCH: removes all drawn route lines of waypoint illustrations.
+    document.getElementById('live-recalc').checked = true;
+    this.liveRecalc = true;
+
     this.wpManager.waypoints.forEach(wp => {
       (wp.stencilPaths || []).forEach(sp => {
         if (sp.mapLine) this.routeManager.map.removeLayer(sp.mapLine);
@@ -395,9 +732,9 @@ class App {
     this.refreshWaypointList();
     this._updateStats();
     this._saveToStorage();
-    if (this.editorUI) this.editorUI.close();  //Close modal if open
-    this.wpManager.currentIndex = null; //Reset
-    // Reset map view to user's location, mirroring the initial _initMap behaviour
+    if (this.editorUI) this.editorUI.close();
+    this.wpManager.currentIndex = null;
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos  => this.routeManager.map.setView([pos.coords.latitude, pos.coords.longitude], 13, { animate: true }),
@@ -407,16 +744,17 @@ class App {
     } else {
       this.routeManager.map.setView(this.FALLBACK, 13, { animate: true });
     }
-
   }
 
-  /* use local browser storage: let the user resume when tehy revisit later. */
+  /* ============================================================
+     PERSISTENCE
+     ============================================================ */
   _saveToStorage() {
     try {
       localStorage.setItem('rally-roadbook-save', JSON.stringify({
         route:      this.routeManager.serialize(),
         waypoints:  this.wpManager.serialize(),
-        via:        this.viaPoints.map(v => ({ lat: v.latlng.lat, lng: v.latlng.lng, label: v.label })),
+        via:        this.viaPoints.map(v => ({ lat: v.latlng.lat, lng: v.latlng.lng, label: v.label, note: v.note || '', includeInPDF: v.includeInPDF || false })),
         startLabel: this.startLabel,
         endLabel:   this.endLabel
       }));
@@ -429,7 +767,7 @@ class App {
       if (!raw) return;
       const data = JSON.parse(raw);
       if (data.waypoints && data.waypoints.length > 0) {
-        if (confirm(`Restore saved route with ${data.waypoints.length} waypoints?`)) {                      //TODO: replace with a nice modal.
+        if (confirm(`Restore saved route with ${data.waypoints.length} waypoints?`)) {
           this._restoreFromData(data.route, data.waypoints, data.via, data.startLabel, data.endLabel);
         }
       }
@@ -442,23 +780,49 @@ class App {
       if (startLabel) { document.getElementById('input-start').value = startLabel; this.startLabel = startLabel; }
       if (endLabel)   { document.getElementById('input-end').value   = endLabel;   this.endLabel   = endLabel;   }
 
-      // Restore via-point markers
+      // Remove existing via markers
       this.viaPoints.forEach(v => { if (v.marker) this.routeManager.map.removeLayer(v.marker); });
       this.viaPoints = [];
-      for (const v of (via || [])) {
-        const latlng  = L.latLng(v.lat, v.lng);
-        const viaIcon = L.divIcon({
-          className: '',
-          html: `<div style="width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #aaa;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-          iconSize: [12, 12], iconAnchor: [6, 6]
+
+      // Restore via points with numbered markers
+      for (let i = 0; i < (via || []).length; i++) {
+        const v = via[i];
+        const latlng = L.latLng(v.lat, v.lng);
+        const marker = this._createViaMarker(latlng, i + 1);
+
+        marker.on('dragend', async () => {
+          const idx = this.viaPoints.findIndex(vp => vp.marker === marker);
+          if (idx !== -1) {
+            this.viaPoints[idx].latlng = marker.getLatLng();
+            this._renumberViaMarkers();
+            this._renderViaList();
+            if (this.liveRecalc) await this._calcRoute();
+          }
         });
-        const marker = L.marker(latlng, { icon: viaIcon, draggable: true, zIndexOffset: 300 })
-          .addTo(this.routeManager.map);
-        this.viaPoints.push({ latlng, label: v.label || 'Via', marker });
+
+        marker.on('contextmenu', async () => {
+          const idx = this.viaPoints.findIndex(vp => vp.marker === marker);
+          if (idx !== -1) {
+            this.routeManager.map.removeLayer(marker);
+            this.viaPoints.splice(idx, 1);
+            this._renumberViaMarkers();
+            this._renderViaList();
+            this._updateViaBadge();
+            if (this.liveRecalc) await this._calcRoute();
+          }
+        });
+
+        this.viaPoints.push({ latlng, label: v.label || `Via ${i + 1}`, marker, note: v.note || '', includeInPDF: v.includeInPDF || false });
       }
       this._renderViaList();
 
-      // Deserialize waypoints (no markers yet)
+      // Auto-expand via section if there are via points
+      if (this.viaPoints.length > 0) {
+        this._viaExpanded = true;
+        document.getElementById('via-body').classList.remove('hidden');
+        document.getElementById('via-toggle-arrow').textContent = '▼';
+      }
+
       this.wpManager.deserialize(wpData);
 
       if (routeData && routeData.start && routeData.end) {
@@ -466,14 +830,12 @@ class App {
         this.routeManager.endPoint   = L.latLng(routeData.end.lat,   routeData.end.lng);
       }
 
-      // Place waypoint markers BEFORE calculateRoute so they survive the recalc
       this.routeManager.restoreWaypointMarkers(
         this.wpManager.getAll(),
         this._markerClickFn,
         this._markerRightClickFn
       );
 
-      // Recalculate route line (does NOT remove markers)
       if (this.routeManager.startPoint && this.routeManager.endPoint) {
         try {
           const viaLatLngs = this.viaPoints.map(v => v.latlng);
@@ -486,8 +848,6 @@ class App {
         } catch (e) { console.warn('Route recalc failed:', e); }
       }
 
-      // After calculateRoute the step data is refreshed but our deserialized
-      // waypoints (with their markers) are already on the map — just refresh UI
       this.refreshWaypointList();
       this._updateStats();
     } finally {
@@ -495,7 +855,9 @@ class App {
     }
   }
 
-  /* LOADING */
+  /* ============================================================
+     LOADING OVERLAY
+     ============================================================ */
   _showLoading(msg = 'Loading…') {
     let el = document.getElementById('loading-overlay');
     if (!el) {

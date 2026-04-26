@@ -1001,7 +1001,242 @@ class WaypointEditorUI {
   hideIconProps() { this.iconProps.classList.add('hidden'); }
 }
 
+/* =====================================================
+   ViaEditorPanel
+   A slide-in panel (from the left, same motion as
+   WaypointEditorUI) for editing a via-point's note
+   and PDF-include flag.
+   ===================================================== */
+class ViaEditorPanel {
+  constructor() {
+    this._via      = null;  // the via-point object currently being edited
+    this._onSave   = null;  // () => void  called whenever data changes
+    this._panel    = null;
+    this._backdrop = null;
+    this._build();
+  }
+
+  /* ---- DOM construction ---- */
+  _build() {
+    /* Backdrop */
+    this._backdrop = document.createElement('div');
+    this._backdrop.id = 'via-editor-backdrop';
+    this._backdrop.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:1100',
+      'background:rgba(0,0,0,0.45)', 'backdrop-filter:blur(2px)',
+      'display:none', 'opacity:0', 'transition:opacity 0.25s'
+    ].join(';');
+    this._backdrop.addEventListener('click', () => this.close());
+    document.body.appendChild(this._backdrop);
+
+    /* Panel — slides in from the left */
+    this._panel = document.createElement('div');
+    this._panel.id = 'via-editor-panel';
+    this._panel.style.cssText = [
+      'position:fixed', 'top:0', 'left:0', 'bottom:0',
+      'width:340px', 'max-width:92vw',
+      'z-index:1101',
+      'background:var(--panel-bg,#151a28)',
+      'border-right:1px solid var(--border,#2a3048)',
+      'display:flex', 'flex-direction:column',
+      'transform:translateX(-100%)',
+      'transition:transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+      'box-shadow:4px 0 32px rgba(0,0,0,0.55)'
+    ].join(';');
+    document.body.appendChild(this._panel);
+
+    /* Header */
+    const header = document.createElement('div');
+    header.id = 'via-editor-header';
+    header.style.cssText = [
+      'display:flex', 'align-items:center', 'justify-content:space-between',
+      'padding:14px 16px 12px',
+      'background:var(--header-bg,#0f1117)',
+      'border-bottom:1px solid var(--border,#2a3048)',
+      'flex-shrink:0'
+    ].join(';');
+
+    this._titleEl = document.createElement('h2');
+    this._titleEl.style.cssText = 'margin:0;font-size:15px;font-weight:700;color:var(--accent,#f5a623);letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;';
+    this._titleEl.textContent = 'Via Point';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = [
+      'background:none', 'border:none', 'color:var(--text-muted,#8888aa)',
+      'font-size:20px', 'cursor:pointer', 'line-height:1', 'padding:0 2px',
+      'flex-shrink:0'
+    ].join(';');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.title = 'Close';
+    closeBtn.addEventListener('click', () => this.close());
+
+    header.appendChild(this._titleEl);
+    header.appendChild(closeBtn);
+    this._panel.appendChild(header);
+
+    /* Body */
+    const body = document.createElement('div');
+    body.style.cssText = 'flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:20px;';
+
+    /* ── Location info ── */
+    this._locationEl = document.createElement('div');
+    this._locationEl.style.cssText = [
+      'font-size:11px', 'color:var(--text-muted,#8888aa)',
+      'background:var(--input-bg,#10141e)',
+      'border:1px solid var(--border,#2a3048)',
+      'border-radius:6px', 'padding:8px 10px', 'line-height:1.5'
+    ].join(';');
+    body.appendChild(this._locationEl);
+
+    /* ── Note field ── */
+    const noteSection = document.createElement('div');
+    noteSection.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+
+    const noteLabel = document.createElement('label');
+    noteLabel.style.cssText = 'font-size:12px;font-weight:600;color:var(--text,#e0e0f0);letter-spacing:0.3px;';
+    noteLabel.textContent = 'Note';
+
+    this._noteEl = document.createElement('textarea');
+    this._noteEl.placeholder = 'Add a note for this via point…';
+    this._noteEl.rows = 5;
+    this._noteEl.style.cssText = [
+      'width:100%', 'box-sizing:border-box',
+      'resize:vertical', 'min-height:100px',
+      'background:var(--input-bg,#10141e)',
+      'color:var(--text,#e0e0f0)',
+      'border:1px solid var(--border,#2a3048)',
+      'border-radius:6px',
+      'padding:8px 10px',
+      'font-size:13px', 'font-family:inherit', 'line-height:1.5',
+      'transition:border-color 0.15s'
+    ].join(';');
+    this._noteEl.addEventListener('focus', () => {
+      this._noteEl.style.borderColor = 'var(--accent,#f5a623)';
+      this._noteEl.style.outline = 'none';
+    });
+    this._noteEl.addEventListener('blur',  () => {
+      this._noteEl.style.borderColor = 'var(--border,#2a3048)';
+    });
+    this._noteEl.addEventListener('input', () => {
+      if (this._via) {
+        this._via.note = this._noteEl.value;
+        if (this._onSave) this._onSave();
+      }
+    });
+
+    noteSection.appendChild(noteLabel);
+    noteSection.appendChild(this._noteEl);
+    body.appendChild(noteSection);
+
+    /* ── PDF include toggle ── */
+    const pdfSection = document.createElement('div');
+    pdfSection.style.cssText = [
+      'display:flex', 'align-items:flex-start', 'gap:12px',
+      'background:var(--input-bg,#10141e)',
+      'border:1px solid var(--border,#2a3048)',
+      'border-radius:8px', 'padding:12px 14px'
+    ].join(';');
+
+    this._pdfCheckEl = document.createElement('input');
+    this._pdfCheckEl.type = 'checkbox';
+    this._pdfCheckEl.style.cssText = [
+      'width:17px', 'height:17px', 'margin-top:1px', 'flex-shrink:0',
+      'accent-color:var(--accent,#f5a623)', 'cursor:pointer'
+    ].join(';');
+    this._pdfCheckEl.addEventListener('change', () => {
+      if (this._via) {
+        this._via.includeInPDF = this._pdfCheckEl.checked;
+        if (this._onSave) this._onSave();
+      }
+    });
+
+    const pdfTextWrap = document.createElement('div');
+    pdfTextWrap.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+
+    const pdfLabel = document.createElement('label');
+    pdfLabel.style.cssText = 'font-size:13px;font-weight:600;color:var(--text,#e0e0f0);cursor:pointer;';
+    pdfLabel.textContent = 'Include in PDF';
+    pdfLabel.addEventListener('click', () => {
+      this._pdfCheckEl.click();
+    });
+
+    const pdfHint = document.createElement('span');
+    pdfHint.style.cssText = 'font-size:11px;color:var(--text-muted,#8888aa);line-height:1.4;';
+    pdfHint.textContent = 'Include this via point as a row in the exported roadbook PDF.';
+
+    pdfTextWrap.appendChild(pdfLabel);
+    pdfTextWrap.appendChild(pdfHint);
+    pdfSection.appendChild(this._pdfCheckEl);
+    pdfSection.appendChild(pdfTextWrap);
+    body.appendChild(pdfSection);
+
+    /* ── Done button ── */
+    const doneBtn = document.createElement('button');
+    doneBtn.style.cssText = [
+      'margin-top:auto',
+      'width:100%', 'padding:11px',
+      'background:var(--accent,#f5a623)',
+      'color:#1a1a2e', 'border:none', 'border-radius:7px',
+      'font-size:13px', 'font-weight:700', 'letter-spacing:0.5px',
+      'text-transform:uppercase', 'cursor:pointer',
+      'transition:opacity 0.15s'
+    ].join(';');
+    doneBtn.textContent = 'Done';
+    doneBtn.addEventListener('mouseenter', () => { doneBtn.style.opacity = '0.85'; });
+    doneBtn.addEventListener('mouseleave', () => { doneBtn.style.opacity = '1'; });
+    doneBtn.addEventListener('click', () => this.close());
+    body.appendChild(doneBtn);
+
+    this._panel.appendChild(body);
+  }
+
+  /* ---- public API ---- */
+
+  /**
+   * Open the panel for a given via-point object.
+   * @param {object} via        — the via-point data object from app.viaPoints
+   * @param {number} num        — 1-based display number
+   * @param {function} onSave   — called each time note/checkbox changes
+   */
+  open(via, num, onSave) {
+    this._via    = via;
+    this._onSave = onSave;
+
+    /* Populate fields */
+    this._titleEl.textContent    = `Via Point ${num}`;
+    this._locationEl.textContent = via.label || `Via ${num}`;
+    this._noteEl.value           = via.note || '';
+    this._pdfCheckEl.checked     = !!via.includeInPDF;
+
+    /* Show backdrop + slide panel in */
+    this._backdrop.style.display = 'block';
+    void this._backdrop.offsetWidth;   // force reflow
+    this._backdrop.style.opacity = '1';
+
+    this._panel.style.display = 'flex';
+    void this._panel.offsetWidth;      // force reflow
+    this._panel.style.transform = 'translateX(0)';
+
+    /* Focus the textarea after the transition */
+    setTimeout(() => this._noteEl.focus(), 300);
+  }
+
+  close() {
+    this._panel.style.transform = 'translateX(-100%)';
+    this._backdrop.style.opacity = '0';
+
+    this._panel.addEventListener('transitionend', () => {
+      this._panel.style.display = 'none';
+      this._backdrop.style.display = 'none';
+    }, { once: true });
+
+    this._via    = null;
+    this._onSave = null;
+  }
+}
+
 window.WaypointManager    = WaypointManager;
 window.WaypointEditorUI   = WaypointEditorUI;
 window.RouteWindowManager = RouteWindowManager;
 window.StencilManager     = StencilManager;
+window.ViaEditorPanel     = ViaEditorPanel;

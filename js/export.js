@@ -77,8 +77,53 @@ class ExportManager {
 
     const wps = this.wpManager.getAll();
 
-    for (let i = 0; i < wps.length; i++) {
-      const wp = wps[i];
+    // Build the via-point map: distTotal (metres) → via object
+    // We estimate via-point distTotal by finding the nearest route coord
+    const viaPoints = (window.app && window.app.viaPoints) || [];
+    const routeCoords = this.routeManager.routeCoords || [];
+
+    const _estimateDist = (latlng) => {
+      if (!routeCoords.length) return Infinity;
+      let best = 0, bestDist = Infinity;
+      routeCoords.forEach((c, i) => {
+        const dlat = (c.lat - latlng.lat) * 111320;
+        const dlng = (c.lng - latlng.lng) * 111320 * Math.cos(latlng.lat * Math.PI / 180);
+        const d = Math.sqrt(dlat * dlat + dlng * dlng);
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      // Cumulative distance up to that coord index
+      let acc = 0;
+      for (let i = 1; i <= best && i < routeCoords.length; i++) {
+        const a = routeCoords[i - 1], b = routeCoords[i];
+        const dlat = (b.lat - a.lat) * 111320;
+        const dlng = (b.lng - a.lng) * 111320 * Math.cos(a.lat * Math.PI / 180);
+        acc += Math.sqrt(dlat * dlat + dlng * dlng);
+      }
+      return acc;
+    };
+
+    // Only include via points the user opted into PDF
+    const viaRows = viaPoints
+      .filter(v => v.includeInPDF)
+      .map(v => ({
+        _isVia:      true,
+        label:       v.label || 'Via point',
+        note:        v.note  || '',
+        latlng:      v.latlng,
+        distTotal:   _estimateDist(v.latlng)
+      }));
+
+    // Merge waypoints and via rows, sorted by distTotal
+    const allRows = [...wps, ...viaRows].sort((a, b) => (a.distTotal || 0) - (b.distTotal || 0));
+
+    // Recalculate distFromPrev across merged list
+    for (let i = 0; i < allRows.length; i++) {
+      const prev = allRows[i - 1];
+      allRows[i]._distFromPrev = prev ? (allRows[i].distTotal - prev.distTotal) : (allRows[i].distTotal || 0);
+    }
+
+    for (let i = 0; i < allRows.length; i++) {
+      const row = allRows[i];
 
       if (y + rowH > pageH - 12) {
         doc.addPage();
@@ -91,63 +136,115 @@ class ExportManager {
 
       // Row background (alternating)
       const bgR = i % 2 === 0 ? 250 : 242;
-      doc.setFillColor(bgR, bgR, bgR - 6);
-      doc.rect(tableLeft, y, totalW, rowH, 'F');
 
-      // Column borders
-      doc.setDrawColor(200, 200, 200);
-      let x = tableLeft;
-      cols.forEach(col => {
-        doc.rect(x, y, col.w, rowH);
-        x += col.w;
-      });
+      if (row._isVia) {
+        /* ── Via-point row: blue tint, no illustration, spans columns 2-5 ── */
+        doc.setFillColor(220, 230, 245);
+        doc.rect(tableLeft, y, totalW, rowH, 'F');
 
-      // Build column x positions
-      const colX = [];
-      x = tableLeft;
-      cols.forEach(col => { colX.push(x); x += col.w; });
+        // Build column x positions
+        const colX = [];
+        let x = tableLeft;
+        cols.forEach(col => { colX.push(x); x += col.w; });
 
-      // 1. Row number
-      doc.setTextColor(80, 80, 100);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${i + 1}`, colX[0] + cols[0].w / 2, y + rowH / 2 + 2, { align: 'center' });
+        // Outer border
+        doc.setDrawColor(180, 190, 210);
+        doc.rect(tableLeft, y, totalW, rowH);
 
-      // 2. Illustration — render SVG to canvas then to PDF
-      try {
-        const pngData = await this._renderWaypointToPNG(wp, 260, 260);
-        if (pngData) {
-          const imgPad = 3;
-          const imgW = cols[1].w - imgPad * 2;
-          const imgH = rowH - imgPad * 2;
-          doc.addImage(pngData, 'PNG', colX[1] + imgPad, y + imgPad, imgW, imgH);
+        // Row number column border
+        doc.rect(tableLeft, y, cols[0].w, rowH);
+
+        // Via badge in col 0
+        doc.setFillColor(30, 58, 138);
+        const bx = colX[0] + 1, by = y + (rowH - 6) / 2;
+        doc.roundedRect(bx, by, cols[0].w - 2, 6, 1, 1, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text('VIA', colX[0] + cols[0].w / 2, by + 4, { align: 'center' });
+
+        // Since prev / Total columns with borders
+        doc.setDrawColor(180, 190, 210);
+        doc.rect(colX[2], y, cols[2].w, rowH);
+        doc.rect(colX[3], y, cols[3].w, rowH);
+
+        doc.setTextColor(40, 40, 80);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        const fmt = v => this.wpManager.formatDistance(v);
+        doc.text(fmt(row._distFromPrev), colX[2] + cols[2].w / 2, y + rowH / 2 + 2, { align: 'center' });
+        doc.text(fmt(row.distTotal),     colX[3] + cols[3].w / 2, y + rowH / 2 + 2, { align: 'center' });
+
+        // Label + note span across illustration + comment columns
+        const spanX = colX[1];
+        const spanW = cols[1].w + cols[4].w;
+        doc.rect(spanX, y, spanW, rowH);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(30, 58, 138);
+        const labelLines = doc.splitTextToSize(`📍 ${row.label}`, spanW - 4);
+        doc.text(labelLines.slice(0, 2), spanX + 2, y + 7);
+
+        if (row.note) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(40, 40, 80);
+          const noteLines = doc.splitTextToSize(row.note, spanW - 4);
+          doc.text(noteLines.slice(0, 4), spanX + 2, y + 14);
         }
-      } catch (err) {
-        console.warn('SVG render error for wp', i, err);
-        doc.setFontSize(7);
-        doc.setTextColor(130, 130, 130);
-        doc.text(wp.type || '—', colX[1] + 2, y + rowH / 2);
-      }
 
-      // 3. Distances
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(40, 40, 60);
-      const fmt = v => this.wpManager.formatDistance(v);
-      const distCols = [
-        { idx: 2, val: fmt(wp.distFromPrev) },
-        { idx: 3, val: fmt(wp.distTotal) }
-      ];
-      distCols.forEach(d => {
-        doc.text(d.val, colX[d.idx] + cols[d.idx].w / 2, y + rowH / 2 + 2, { align: 'center' });
-      });
+      } else {
+        /* ── Regular waypoint row ── */
+        doc.setFillColor(bgR, bgR, bgR - 6);
+        doc.rect(tableLeft, y, totalW, rowH, 'F');
 
-      // 4. Comment
-      if (wp.comment) {
+        doc.setDrawColor(200, 200, 200);
+        let x = tableLeft;
+        const colX = [];
+        cols.forEach(col => { colX.push(x); doc.rect(x, y, col.w, rowH); x += col.w; });
+
+        // Row number
+        doc.setTextColor(80, 80, 100);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${i + 1}`, colX[0] + cols[0].w / 2, y + rowH / 2 + 2, { align: 'center' });
+
+        // Illustration
+        try {
+          const pngData = await this._renderWaypointToPNG(row, 260, 260);
+          if (pngData) {
+            const imgPad = 3;
+            const imgW = cols[1].w - imgPad * 2;
+            const imgH = rowH - imgPad * 2;
+            doc.addImage(pngData, 'PNG', colX[1] + imgPad, y + imgPad, imgW, imgH);
+          }
+        } catch (err) {
+          console.warn('SVG render error for wp', i, err);
+          doc.setFontSize(7);
+          doc.setTextColor(130, 130, 130);
+          doc.text(row.type || '—', colX[1] + 2, y + rowH / 2);
+        }
+
+        // Distances
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(40, 40, 60);
-        const lines = doc.splitTextToSize(wp.comment, cols[4].w - 4);
-        doc.text(lines.slice(0, 5), colX[4] + 2, y + 8);
+        const fmt = v => this.wpManager.formatDistance(v);
+        [
+          { idx: 2, val: fmt(row._distFromPrev) },
+          { idx: 3, val: fmt(row.distTotal) }
+        ].forEach(d => {
+          doc.text(d.val, colX[d.idx] + cols[d.idx].w / 2, y + rowH / 2 + 2, { align: 'center' });
+        });
+
+        // Comment
+        if (row.comment) {
+          doc.setFontSize(8);
+          doc.setTextColor(40, 40, 60);
+          const lines = doc.splitTextToSize(row.comment, cols[4].w - 4);
+          doc.text(lines.slice(0, 5), colX[4] + 2, y + 8);
+        }
       }
 
       y += rowH;

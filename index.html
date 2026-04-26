@@ -51,23 +51,59 @@
     <aside id="left-panel">
       <div class="panel-section">
         <h3>Route Setup</h3>
+
+        <!-- START -->
         <label>Start Point</label>
         <div class="coord-row">
           <input type="text" id="input-start" placeholder="Search start address…" />
           <button class="btn-icon" id="btn-pick-start" title="Pick on map">📍</button>
         </div>
+
+        <!-- VIA POINTS — expandable list between Start and End -->
+        <div id="via-section">
+          <div id="via-header">
+            <button id="via-toggle" class="via-toggle-btn" title="Show/hide via points">
+              <span id="via-toggle-arrow">▶</span>
+              <span id="via-toggle-label">Via Points <span id="via-count-badge" class="hidden"></span></span>
+            </button>
+            <button class="btn-icon" id="btn-add-via-address" title="Add via point by address">＋</button>
+            <button class="btn-icon" id="btn-add-via-map" title="Pick via point on map">📍</button>
+          </div>
+
+          <div id="via-body" class="hidden">
+            <!-- Add-by-address row (shown when ＋ is clicked) -->
+            <div id="via-add-row" class="hidden">
+              <div class="coord-row">
+                <input type="text" id="via-address-input" placeholder="Search via address…" />
+                <button class="btn-icon" id="btn-via-address-confirm" title="Add">✔</button>
+                <button class="btn-icon" id="btn-via-address-cancel" title="Cancel">✕</button>
+              </div>
+            </div>
+
+            <!-- Sortable via list -->
+            <div id="via-points-list"></div>
+
+            <!-- Actions row -->
+            <div id="via-actions">
+              <button class="btn btn-secondary full-width" id="btn-optimize-via">⇅ Optimize Order</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- END -->
         <label>End Point</label>
         <div class="coord-row">
           <input type="text" id="input-end" placeholder="Search end address…" />
           <button class="btn-icon" id="btn-pick-end" title="Pick on map">🏁</button>
         </div>
-        <button class="btn btn-primary full-width" id="btn-calc-route">Calculate Route</button>
-      </div>
 
-      <div class="panel-section">
-        <h3>Via Points</h3>
-        <div id="via-points-list"></div>
-        <button class="btn btn-secondary full-width" id="btn-add-via">+ Add Via Point</button>
+        <div class="coord-row" style="margin-top:8px;">
+          <label class="checkbox-row" style="flex:1;">
+            <input type="checkbox" id="live-recalc" checked> Live Recalc
+          </label>
+        </div>
+
+        <button class="btn btn-primary full-width" id="btn-calc-route" style="margin-top:8px;">Calculate Route</button>
       </div>
 
       <div class="panel-section">
@@ -125,17 +161,14 @@
             <button class="tool-btn" id="btn-redo" title="Redo">↪</button>
             <button class="tool-btn" id="btn-clear-drawing" title="Clear drawings">🗑</button>
             <div class="tool-divider"></div>
-            <!-- Stencil: click to toggle map-snapping mode; click a road on the map to copy it -->
-             <!-- <div class="tool-btn-group"> -->
-              <button class="tool-btn-text" id="btn-stencil"
-                title="Stencil mode: click roads on the map to copy them into the illustration"><span>Draw on map</span></button>
-              <button class="tool-btn-text" id="btn-stencil-eraser"
-                title="Stencil Eraser: click green lines to remove"><span>Erase</span></button>
-              <button class="tool-btn-text" id="btn-clear-stencil"
-                title="Remove all stencilled roads from this waypoint"><span>Erase all</span></span></button>
-              <button class="tool-btn-text" id="btn-auto-stencil"
-                title="Auto-stencil roads around the waypoint"><span>Auto draw</span></button>
-            <!-- </div> -->
+            <button class="tool-btn-text" id="btn-stencil"
+              title="Stencil mode: click roads on the map to copy them into the illustration"><span>Draw on map</span></button>
+            <button class="tool-btn-text" id="btn-stencil-eraser"
+              title="Stencil Eraser: click green lines to remove"><span>Erase</span></button>
+            <button class="tool-btn-text" id="btn-clear-stencil"
+              title="Remove all stencilled roads from this waypoint"><span>Erase all</span></button>
+            <button class="tool-btn-text" id="btn-auto-stencil"
+              title="Auto-stencil roads around the waypoint"><span>Auto draw</span></button>
           </div>
           <div id="svg-wrapper">
             <svg id="wp-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">

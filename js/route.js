@@ -6,6 +6,8 @@
  * - Double-click on the route line adds a waypoint (single-click no longer does)
  * - Single mousedown + drag still reshapes the route via a via-point
  * - Waypoint markers are tracked and survive route recalculations
+ * - VIA_SNAP_RADIUS increased to 35 m so steps that land on a via-point are
+ *   correctly suppressed (fixes "double waypoint on via" bug)
  */
 
 class RouteManager {
@@ -110,11 +112,29 @@ class RouteManager {
   }
 
   _handleMapPick(latlng) {
+    const mode = this._pickMode;
+    const cb   = this._onPickCallback;
+
+    // Sticky via mode: keep crosshair + indicator active, just fire the callback
+    if (mode === 'via-sticky') {
+      if (cb) cb(mode, latlng);
+      // stay armed — do NOT clear _pickMode or _onPickCallback
+      return;
+    }
+
+    // Normal single-pick modes
     document.getElementById('map-mode-indicator').classList.add('hidden');
     this.map.getContainer().style.cursor = '';
-    const mode = this._pickMode;
     this._pickMode = null;
-    if (this._onPickCallback) { this._onPickCallback(mode, latlng); this._onPickCallback = null; }
+    this._onPickCallback = null;
+    if (cb) cb(mode, latlng);
+  }
+
+  stopPickMode() {
+    this._pickMode = null;
+    this._onPickCallback = null;
+    document.getElementById('map-mode-indicator').classList.add('hidden');
+    this.map.getContainer().style.cursor = '';
   }
 
   /* ---- ROUTE CALCULATION ---- */
@@ -158,7 +178,7 @@ class RouteManager {
       .on('routesfound', e => {
         const route       = e.routes[0];
         this.routeCoords  = route.coordinates;
-        this.routeSteps   = this._processSteps(route);
+        this.routeSteps   = this._processSteps(route, viaLatLngs);
         this._drawInteractiveLine();
         this._placeEndpointMarkers();
         resolve(this.routeSteps);
@@ -291,9 +311,19 @@ class RouteManager {
   }
 
   /* PROCESS ROUTE STEPS -> waypoint data  */
-  _processSteps(route) {
+  _processSteps(route, viaLatLngs = []) {
+    // Types that represent no real navigation action
+    const PASSTHROUGH_TYPES = new Set(['straight', 'start', 'finish']);
+
+    // --- FIX: use a meaningful snap radius (35 m) so that OSRM steps that
+    //     land on or very near a via-point are correctly suppressed.
+    //     The old value of 0 meant nothing was ever filtered, causing
+    //     one or two phantom waypoints to appear on top of every via-point.
+    const VIA_SNAP_RADIUS = 35; // metres
+
     const steps  = [];
     const coords = route.coordinates;
+
     if (!route.instructions) return steps;
 
     const relevant = route.instructions.filter(instr => {
@@ -321,21 +351,32 @@ class RouteManager {
       const distFromPrev = prevInstr
         ? (distUpTo[cIdx] - distUpTo[prevInstr.index])
         : distUpTo[cIdx];
-      // distTotal = distance from start to THIS waypoint dot (the yellow dot).
-      // distAB (the forward leg after the dot) is retained internally for
-      // recalculating distFromPrev on the next step, but is no longer exposed in the UI.
       const distTotal    = distUpTo[cIdx];
+
+      const maneuverType = this._classifyManeuver(instr.type, instr.modifier);
+
+      // Mark as via-passthrough if: maneuver is trivial AND the step sits
+      // within VIA_SNAP_RADIUS of one of the user's via-points.
+      let isViaPassthrough = false;
+      if (PASSTHROUGH_TYPES.has(maneuverType) && viaLatLngs.length > 0) {
+        isViaPassthrough = viaLatLngs.some(via => {
+          const dlat = (latlng.lat - via.lat) * 111320;
+          const dlng = (latlng.lng - via.lng) * 111320 * Math.cos(latlng.lat * Math.PI / 180);
+          return Math.sqrt(dlat * dlat + dlng * dlng) < VIA_SNAP_RADIUS;
+        });
+      }
 
       steps.push({
         coordIdx: cIdx,
         latlng,
-        type:        this._classifyManeuver(instr.type, instr.modifier),
+        type:        maneuverType,
         instruction: instr.text || instr.type || 'Maneuver',
         bearing:     exitBearing,
         inBearing,
         distAB,
         distFromPrev,
         distTotal,
+        isViaPassthrough,
         nearCoords: {
           before: coords.slice(Math.max(0, cIdx - 12), cIdx),
           after:  coords.slice(cIdx + 1, Math.min(coords.length, cIdx + 13))

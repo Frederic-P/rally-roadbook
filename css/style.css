@@ -181,26 +181,173 @@ input[type="text"]:focus, textarea:focus, select:focus {
 }
 .coord-row input { flex: 1; }
 
-/* ---- VIA POINTS ---- */
+/* ---- VIA SECTION ---- */
+#via-section {
+  margin: 6px 0 8px;
+}
+
+#via-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.via-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.via-toggle-btn:hover {
+  background: rgba(245, 166, 35, 0.08);
+  color: var(--accent);
+}
+
+#via-toggle-arrow {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+#via-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #1a1a2e;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  line-height: 1;
+}
+#via-count-badge.hidden { display: none; }
+
+#via-body {
+  padding: 4px 0 2px;
+}
+#via-body.hidden { display: none; }
+
+#via-add-row {
+  margin-bottom: 6px;
+}
+#via-add-row.hidden { display: none; }
+
+#via-actions {
+  margin-top: 4px;
+}
+
+/* ---- VIA LIST ITEMS ---- */
 #via-points-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 3px;
 }
 
 .via-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 5px 8px;
-  font-size: 12px;
+  padding: 5px 6px;
+  cursor: default;
+  user-select: none;
+  transition: border-color 0.12s;
 }
-.via-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.via-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0; }
+.via-item:hover { border-color: var(--accent); }
+.via-item.via-dragging { opacity: 0.4; }
+.via-item.via-drag-over {
+  border-color: var(--accent);
+  background: rgba(245, 166, 35, 0.08);
+}
+
+.via-num-badge {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1e3a8a;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.via-num-badge:hover { background: #2a52b8; }
+
+.via-drag-handle {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: grab;
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s, color 0.15s;
+}
+.via-drag-handle:hover { opacity: 1; color: var(--accent); }
+.via-item.via-dragging .via-drag-handle { cursor: grabbing; }
+
+.via-label-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.via-label-container span[contenteditable] {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  border-radius: 3px;
+  padding: 1px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: text;
+}
+.via-label-container span[contenteditable]:focus {
+  background: rgba(245, 166, 35, 0.08);
+  color: var(--accent);
+  white-space: normal;
+  overflow: visible;
+}
+
+.via-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.1s, color 0.1s;
+}
+.via-remove:hover { opacity: 1; color: var(--danger); }
 
 /* ---- WAYPOINTS LIST ---- */
 #waypoints-list {
@@ -229,7 +376,8 @@ input[type="text"]:focus, textarea:focus, select:focus {
 .wp-list-item.has-comment { border-left: 3px solid var(--accent); }
 
 .wp-dot-mini {
-  width: 10px; height: 10px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--wp-dot);
   flex-shrink: 0;
@@ -257,6 +405,7 @@ input[type="text"]:focus, textarea:focus, select:focus {
   height: 100%;
 }
 
+/* pointer-events: auto so the Done button inside is clickable */
 #map-mode-indicator {
   position: absolute;
   top: 12px;
@@ -269,8 +418,14 @@ input[type="text"]:focus, textarea:focus, select:focus {
   padding: 8px 20px;
   border-radius: 20px;
   z-index: 1000;
-  pointer-events: none;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
+#map-mode-indicator.hidden { display: none !important; }
+
 .hidden { display: none !important; }
 
 /* Leaflet dark override */
@@ -278,23 +433,21 @@ input[type="text"]:focus, textarea:focus, select:focus {
 .leaflet-container { background: #0d1018; }
 
 /* ---- WAYPOINT EDITOR — BACKDROP ---- */
-/* Only covers the panel itself — does NOT dim or block the map */
 #wp-editor-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  width: 900px;       /* matches panel width */
+  width: 900px;
   max-width: 95vw;
   height: 100vh;
   background: transparent;
   z-index: 1100;
-  pointer-events: none; /* clicks pass through to the map */
+  pointer-events: none;
   transition: opacity 0.3s ease;
 }
 #wp-editor-backdrop.hidden { display: none !important; }
 
 /* ---- WAYPOINT EDITOR — SLIDE-IN PANEL ---- */
-/* Remove the old .overlay centred-modal behaviour entirely */
 #wp-editor-overlay {
   position: fixed;
   top: 0;
@@ -302,21 +455,14 @@ input[type="text"]:focus, textarea:focus, select:focus {
   height: 100vh;
   width: 900px;
   max-width: 95vw;
-
-  /* Start off-screen to the left */
   transform: translateX(-100%);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-
   z-index: 1200;
   overflow-y: auto;
-
   background: var(--bg2);
   box-shadow: 4px 0 32px rgba(0, 0, 0, 0.7);
-
   display: flex;
   flex-direction: column;
-
-  /* Hidden completely when not in use */
   visibility: hidden;
   pointer-events: none;
 }
@@ -324,14 +470,13 @@ input[type="text"]:focus, textarea:focus, select:focus {
   visibility: hidden;
   pointer-events: none;
 }
-/* Slide in */
 #wp-editor-overlay.open {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto;
 }
 
-/* ---- WP EDITOR INNER (unchanged sizing, now fills the panel) ---- */
+/* ---- WP EDITOR INNER ---- */
 #wp-editor {
   background: var(--bg2);
   border-right: 1px solid var(--border);
@@ -400,34 +545,19 @@ input[type="text"]:focus, textarea:focus, select:focus {
   justify-content: center;
   transition: all 0.15s;
 }
-.tool-btn:hover, .tool-btn.active, .tool-btn-text:hover, tool-btn-text.active {
+.tool-btn:hover,
+.tool-btn.active,
+.tool-btn-text:hover,
+.tool-btn-text.active {
   background: var(--accent);
   color: #111;
   border-color: var(--accent);
 }
 
-.tool-btn-group {
-  display: flex;
-  gap: 8px; /* optional spacing */
-  transition: all 0.15s;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .tool-btn-text {
-
-  flex: 1;                 /* makes all buttons equal width */
+  flex: 1;
   text-align: center;
-  white-space: nowrap;     /* prevents wrapping differences */
+  white-space: nowrap;
 }
 
 .tool-divider {
@@ -470,7 +600,7 @@ input[type="color"] {
   aspect-ratio: 1;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   cursor: crosshair;
 }
 
@@ -573,10 +703,12 @@ input[type="color"] {
 .icon-item:hover { background: var(--bg3); border-color: var(--border); }
 .icon-item.dragging { opacity: 0.5; }
 
-.icon-item svg, .icon-item img {
+.icon-item svg,
+.icon-item img {
   width: 32px;
   height: 32px;
 }
+
 .icon-name {
   font-size: 9px;
   color: var(--text-muted);
@@ -584,7 +716,6 @@ input[type="color"] {
   line-height: 1.2;
   max-width: 52px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -618,11 +749,7 @@ input[type="color"] {
   align-items: center;
   gap: 8px;
 }
-.prop-row label {
-  margin: 0;
-  min-width: 60px;
-  font-size: 12px;
-}
+.prop-row label { margin: 0; min-width: 60px; font-size: 12px; }
 .prop-row input[type="range"] { flex: 1; }
 .prop-row span { min-width: 36px; font-size: 12px; color: var(--accent); text-align: right; }
 
@@ -633,49 +760,43 @@ input[type="color"] {
   border-radius: 50%;
   background: var(--wp-dot);
   border: 2px solid #fff;
-  box-shadow: 0 0 0 2px rgba(245,166,35,0.4), 0 2px 6px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5);
   cursor: pointer;
   transition: transform 0.15s;
 }
 .wp-marker-circle:hover { transform: scale(1.4); }
-.wp-marker-circle.has-data { background: var(--accent); box-shadow: 0 0 0 3px rgba(245,166,35,0.5); }
+.wp-marker-circle.has-data {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.5);
+}
 
 /* ---- ROUTE LINE INTERACTION ---- */
 .route-hit-line { cursor: crosshair !important; }
 .route-vis-line { pointer-events: none; }
-
-.leaflet-interactive.route-hit-line {
-  cursor: crosshair !important;
-}
+.leaflet-interactive.route-hit-line { cursor: crosshair !important; }
 
 /* ---- ROUTE WINDOW RECTANGLE ---- */
-.route-window-rect {
-  cursor: grab;
-}
-.route-window-rect:active {
-  cursor: grabbing;
-}
-/* Corner resize handles */
-.route-window-handle {
-  cursor: nwse-resize;
-}
+.route-window-rect { cursor: grab; }
+.route-window-rect:active { cursor: grabbing; }
+.route-window-handle { cursor: nwse-resize; }
 
 /* ---- LEAFLET OVERRIDES ---- */
 .leaflet-routing-container { display: none; }
 
-
-/* scrollbar global */
+/* ---- SCROLLBAR GLOBAL ---- */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* ---- SPINNER for buttons ---- */
-.btn.loading, .tool-btn.loading {
+/* ---- LOADING SPINNER ---- */
+.btn.loading,
+.tool-btn.loading {
   position: relative;
   color: transparent !important;
   pointer-events: none;
 }
-.btn.loading::after, .tool-btn.loading::after {
+.btn.loading::after,
+.tool-btn.loading::after {
   content: '';
   display: block;
   position: absolute;
@@ -690,10 +811,9 @@ input[type="color"] {
   animation: spinner 0.6s linear infinite;
 }
 .tool-btn.loading::after {
-  border: 2px solid rgba(0,0,0, 0.5);
+  border: 2px solid rgba(0, 0, 0, 0.5);
   border-top-color: #000;
 }
-
 
 @keyframes spinner {
   to { transform: rotate(360deg); }
@@ -714,38 +834,22 @@ input[type="color"] {
 .toast-notification {
   padding: 12px 20px;
   border-radius: 6px;
-  font-family: 'Barlow', sans-serif;
+  font-family: var(--font-main);
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
 }
-
-.toast-notification.success {
-  background: var(--success);
-}
-
-.toast-notification.error {
-  background: var(--danger);
-}
+.toast-notification.success { background: var(--success); }
+.toast-notification.error   { background: var(--danger); }
 
 @keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes toast-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
