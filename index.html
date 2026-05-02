@@ -229,7 +229,26 @@
     </div>
   </div>
 
+  <div id="modal-backdrop" class="modal-backdrop">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title">Notification</h3>
+      </div>
+      <div class="modal-body">
+        <p id="modal-message"></p>
+        <div id="modal-input-container" class="modal-input hidden">
+          <input type="text" id="modal-prompt-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-btn-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="modal-btn-ok" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- App scripts -->
+  <script src="js/ui.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/svg-editor.js"></script>
   <script src="js/waypoint.js"></script>

@@ -118,15 +118,15 @@ class SVGEditor {
     this.startPt = null;
   }
 
-  _onClick(e) {
+  async _onClick(e) { 
     if (this.currentTool === 'text') {
       const pt   = this._getSVGPoint(e);
-      const text = prompt('Enter text:');
+      const text = await Modal.prompt('Enter text:');
       if (text) {
         this._pushUndo();
         const el = this._makeSVGEl('text', {
           x: pt.x, y: pt.y, fill: this.currentColor,
-          'font-size': 10, 'font-family': 'Arial, sans-serif'
+          'font-size': 10,  'font-family': 'Arial, sans-serif'
         });
         el.textContent = text;
         this.drawLayer.appendChild(el);

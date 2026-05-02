@@ -3,5 +3,4 @@
 3) Illustration needs to match boundingbox perfectly, right now padding is off. 
 4) write documentation and quickstart guide
 5) Add version as superglobal and use that in export/import feature
-6) Replace Confirm/Alert/Prompt with proper modal boxes. 
 11) Bolletje is not always connected to waypoint illustration 

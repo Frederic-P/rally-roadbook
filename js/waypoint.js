@@ -681,8 +681,8 @@ class WaypointEditorUI {
     document.getElementById('tool-stroke-width').addEventListener('change', e => this.svgEditor.setStrokeWidth(e.target.value));
     document.getElementById('btn-undo').addEventListener('click',  () => this.svgEditor.undo());
     document.getElementById('btn-redo').addEventListener('click',  () => this.svgEditor.redo());
-    document.getElementById('btn-clear-drawing').addEventListener('click', () => {
-      if (confirm('Clear all drawings?')) this.svgEditor.clearDrawings();
+    document.getElementById('btn-clear-drawing').addEventListener('click', async () => {
+      if (await Modal.confirm('Clear all drawings?')) this.svgEditor.clearDrawings();
     });
 
     /* ---- Stencil button ---- */
@@ -694,9 +694,9 @@ class WaypointEditorUI {
       this._toggleStencilEraser();
     });
 
-    document.getElementById('btn-clear-stencil').addEventListener('click', () => {
+    document.getElementById('btn-clear-stencil').addEventListener('click', async () => {
       if (!this._currentWp) return;
-      if (confirm('Remove all stencil roads for this waypoint?')) {
+      if (await Modal.confirm('Remove all stencil roads for this waypoint?')) {
         this._stencilMgr && this._stencilMgr.clearStencils(this._currentWp);
         this.svgEditor.renderBaseIllustration(this._currentWp);
       }
@@ -713,11 +713,11 @@ class WaypointEditorUI {
         this.svgEditor.renderBaseIllustration(this._currentWp);
       })
       .then(addedCount => {
-        this._showToast(`Added ${addedCount} segments to waypoint illustration`, 'success');
+        Toast.success(`Added ${addedCount} segments to waypoint illustration`);
       })
       .catch(err => {
         console.warn('Auto stencil failed:', err);
-        this._showToast('Autogeneration failed', 'error');
+        Toast.error('Autogeneration failed');
       })
       .finally(() => {
         btn.classList.remove('loading');
@@ -734,9 +734,10 @@ class WaypointEditorUI {
 
     this.iconTree.addEventListener('click', e => {
       const item = e.target.closest('.icon-item');
-      if (!item) return;
-      const ic = iconManager.getById(item.dataset.iconId);
-      if (ic) this.svgEditor.addIcon(ic, 150, 150);
+      if (item && item.dataset.iconId) {
+        const ic = iconManager.getById(item.dataset.iconId);
+        if (ic) this.svgEditor.addIcon(ic); 
+      }
     });
 
     this.iconTree.addEventListener('dragstart', e => {
@@ -773,29 +774,6 @@ class WaypointEditorUI {
     document.getElementById('btn-delete-icon').addEventListener('click', () => {
       this.svgEditor.deleteSelectedIcon();
     });
-  }
-
-  _showToast(message, type = 'success') {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      container.className = 'toast-container';
-      document.body.appendChild(container);
-    }
-
-    const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.textContent = message;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-      if (container.children.length === 0) {
-        container.remove();
-      }
-    }, 3000);
   }
 
   _toggleStencil() {

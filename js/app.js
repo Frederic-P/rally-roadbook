@@ -122,7 +122,7 @@ class App {
       try {
         const start = this.routeManager.startPoint;
         if (!start || !this.routeManager.routeCoords) {
-          alert('Need route first.');
+          await Modal.alert('Need route first.');
           return;
         }
         this.viaPoints.sort((a, b) => {
@@ -138,13 +138,13 @@ class App {
     });
 
     // New Route
-    document.getElementById('btn-new-route').addEventListener('click', () => {
-      if (confirm('Start a new route? All unsaved data will be cleared.')) this._clearAll();
+    document.getElementById('btn-new-route').addEventListener('click', async () => {
+      if (await Modal.confirm('Start a new route? All unsaved data will be cleared.')) this._clearAll();
     });
 
     // Export / Import
-    document.getElementById('btn-save-zip').addEventListener('click', () => {
-      if (!this.wpManager.getAll().length) { alert('No route yet.'); return; }
+    document.getElementById('btn-save-zip').addEventListener('click', async () => {
+      if (!this.wpManager.getAll().length) { await Modal.alert('No route yet.'); return; }
       this._showLoading('Generating ZIP…');
       this.exportManager.exportZIP().finally(() => this._hideLoading());
     });
@@ -152,34 +152,34 @@ class App {
     document.getElementById('btn-load-zip').addEventListener('click', () => {
       document.getElementById('input-load-zip').click();
     });
-    document.getElementById('input-load-zip').addEventListener('change', e => {
+    document.getElementById('input-load-zip').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
       this._showLoading('Loading roadbook…');
       this.exportManager.importZIP(file)
         .then(({ routeData, wpData }) => this._restoreFromData(routeData, wpData))
-        .catch(err => alert('Error loading ZIP: ' + err.message))
+        .catch(err => Modal.alert('Error loading ZIP: ' + err.message))
         .finally(() => this._hideLoading());
       e.target.value = '';
     });
 
-    document.getElementById('btn-export-pdf').addEventListener('click', () => {
-      if (!this.wpManager.getAll().length) { alert('No waypoints yet.'); return; }
+    document.getElementById('btn-export-pdf').addEventListener('click', async () => {
+      if (!this.wpManager.getAll().length) { await Modal.alert('No waypoints yet.'); return; }
       this._showLoading('Generating PDF…');
       this.exportManager.exportPDF().finally(() => this._hideLoading());
     });
 
-    document.getElementById('btn-export-gpx').addEventListener('click', () => {
-      if (!this.wpManager.getAll().length) { alert('No waypoints yet.'); return; }
+    document.getElementById('btn-export-gpx').addEventListener('click', async () => {
+      if (!this.wpManager.getAll().length) { await Modal.alert('No waypoints yet.'); return; }
       this._showLoading('Generating GPX…');
       this.exportManager.exportGPX().finally(() => this._hideLoading());
     });
 
     // Delete button in editor
-    document.getElementById('btn-delete-wp').addEventListener('click', () => {
+    document.getElementById('btn-delete-wp').addEventListener('click', async () => {
       if (this.wpManager.currentIndex === null) return;
       const wp = this.wpManager.waypoints[this.wpManager.currentIndex];
-      if (confirm('Permanently delete this waypoint?')) {
+      if (await Modal.confirm('Permanently delete this waypoint?')) {
         this._deleteWaypoint(wp);
       }
     });
@@ -240,7 +240,7 @@ class App {
       input.value = '';
       document.getElementById('via-add-row').classList.add('hidden');
     } catch (err) {
-      alert('Address not found: ' + (err.message || err));
+      await Modal.alert('Address not found: ' + (err.message || err));
     } finally {
       this._hideLoading();
     }
@@ -581,8 +581,8 @@ class App {
     const startInput = document.getElementById('input-start').value.trim();
     const endInput   = document.getElementById('input-end').value.trim();
 
-    if (!start && !startInput) { alert('Please set a start point.'); return; }
-    if (!end   && !endInput)   { alert('Please set an end point.');   return; }
+    if (!start && !startInput) { await Modal.alert('Please set a start point.'); return; }
+    if (!end   && !endInput)   { await Modal.alert('Please set an end point.');   return; }
 
     this._showLoading('Calculating route…');
 
@@ -637,7 +637,7 @@ class App {
 
     } catch (err) {
       console.error(err);
-      alert('Route error: ' + (err.message || err));
+      await Modal.alert('Route error: ' + (err.message || err));
     } finally {
       this._hideLoading();
     }
@@ -685,9 +685,9 @@ class App {
     btn.className = 'btn';
     btn.style.cssText = 'background:#e74c3c;color:#fff;border:none;padding:6px 12px;cursor:pointer;width:100%;font-size:13px;border-radius:4px;';
     btn.textContent = 'Delete Waypoint';
-    btn.onclick = () => {
+    btn.onclick = async () => {
       this.routeManager.map.closePopup();
-      if (confirm('Delete this waypoint?')) this._deleteWaypoint(wp);
+      if (await Modal.confirm('Delete this waypoint?')) this._deleteWaypoint(wp);
     };
     container.appendChild(btn);
 
@@ -761,13 +761,13 @@ class App {
     } catch (e) { console.warn('localStorage save failed:', e); }
   }
 
-  _loadFromStorage() {
+  async _loadFromStorage() {
     try {
       const raw = localStorage.getItem('rally-roadbook-save');
       if (!raw) return;
       const data = JSON.parse(raw);
       if (data.waypoints && data.waypoints.length > 0) {
-        if (confirm(`Restore saved route with ${data.waypoints.length} waypoints?`)) {
+        if (await Modal.confirm(`Restore saved route with ${data.waypoints.length} waypoints?`)) {
           this._restoreFromData(data.route, data.waypoints, data.via, data.startLabel, data.endLabel);
         }
       }
