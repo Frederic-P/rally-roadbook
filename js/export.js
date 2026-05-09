@@ -1,5 +1,5 @@
 /**
- * export.js — PDF and ZIP export/import
+ * export.js â€” PDF and ZIP export/import
  *
  * PDF fix: SVG is rendered to a hidden <canvas> via a blob URL image,
  * then that canvas is added to jsPDF as PNG data. This avoids the
@@ -22,6 +22,8 @@ class ExportManager {
     const pageW = doc.internal.pageSize.getWidth();   // 210
     const pageH = doc.internal.pageSize.getHeight();  // 297
 
+    const usedIconsMap = new Map(); // id -> { firstSeenIndex, iconData }
+
     const drawHeader = (pageNum) => {
       doc.setFillColor(15, 17, 23);
       doc.rect(0, 0, pageW, 16, 'F');
@@ -36,7 +38,7 @@ class ExportManager {
 
     const drawFooter = () => {
       const year = new Date().getFullYear();
-      const notice = `© ${year} - domain.org/rallyroadbookcreator`;
+      const notice = `Â© ${year} - domain.org/rallyroadbookcreator`;
       doc.setFontSize(8);
       doc.setTextColor(128, 128, 128);
       doc.text(notice, pageW / 2, pageH - 8, { align: 'center' });
@@ -77,7 +79,7 @@ class ExportManager {
 
     const wps = this.wpManager.getAll();
 
-    // Build the via-point map: distTotal (metres) → via object
+    // Build the via-point map: distTotal (metres) â†’ via object
     // We estimate via-point distTotal by finding the nearest route coord
     const viaPoints = (window.app && window.app.viaPoints) || [];
     const routeCoords = this.routeManager.routeCoords || [];
@@ -138,7 +140,7 @@ class ExportManager {
       const bgR = i % 2 === 0 ? 250 : 242;
 
       if (row._isVia) {
-        /* ── Via-point row: blue tint, no illustration, spans columns 2-5 ── */
+        /* â”€â”€ Via-point row: blue tint, no illustration, spans columns 2-5 â”€â”€ */
         doc.setFillColor(220, 230, 245);
         doc.rect(tableLeft, y, totalW, rowH, 'F');
 
@@ -183,7 +185,7 @@ class ExportManager {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(30, 58, 138);
-        const labelLines = doc.splitTextToSize(`📍 ${row.label}`, spanW - 4);
+        const labelLines = doc.splitTextToSize(`ðŸ“ ${row.label}`, spanW - 4);
         doc.text(labelLines.slice(0, 2), spanX + 2, y + 7);
 
         if (row.note) {
@@ -195,7 +197,7 @@ class ExportManager {
         }
 
       } else {
-        /* ── Regular waypoint row ── */
+        /* â”€â”€ Regular waypoint row â”€â”€ */
         doc.setFillColor(bgR, bgR, bgR - 6);
         doc.rect(tableLeft, y, totalW, rowH, 'F');
 
@@ -212,7 +214,13 @@ class ExportManager {
 
         // Illustration
         try {
-          const pngData = await this._renderWaypointToPNG(row, 260, 260);
+          const onIconUsed = (iconId) => {
+            if (!usedIconsMap.has(iconId)) {
+              const ic = window.iconManager.getById(iconId);
+              if (ic) usedIconsMap.set(iconId, { firstSeen: i, icon: ic });
+            }
+          };
+          const pngData = await this._renderWaypointToPNG(row, 260, 260, onIconUsed);
           if (pngData) {
             const imgPad = 3;
             const imgW = cols[1].w - imgPad * 2;
@@ -223,7 +231,7 @@ class ExportManager {
           console.warn('SVG render error for wp', i, err);
           doc.setFontSize(7);
           doc.setTextColor(130, 130, 130);
-          doc.text(row.type || '—', colX[1] + 2, y + rowH / 2);
+          doc.text(row.type || 'â€”', colX[1] + 2, y + rowH / 2);
         }
 
         // Distances
@@ -248,6 +256,58 @@ class ExportManager {
       }
 
       y += rowH;
+    }
+
+    /* Used icons Page*/
+    if (usedIconsMap.size > 0) {
+      doc.addPage();
+      pageNum++;
+      drawHeader(pageNum);
+      drawFooter();
+
+      doc.setTextColor(245, 166, 35);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Used icons', 10, 30);
+
+      const sortedIcons = Array.from(usedIconsMap.values()).sort((a, b) => a.firstSeen - b.firstSeen);
+      
+      let lx = 15, ly = 45;
+      const iconSize = 12;
+      const colWidth = (pageW - 30) / 2;
+
+      for (const item of sortedIcons) {
+        if (ly + 15 > pageH - 15) {
+          doc.addPage();
+          pageNum++;
+          drawHeader(pageNum);
+          drawFooter();
+          ly = 30;
+        }
+
+        // Draw icon
+        try {
+          const icPng = await this._renderIconToPNG(item.icon, 120, 120);
+          doc.addImage(icPng, 'PNG', lx, ly, iconSize, iconSize);
+        } catch (e) {
+          doc.setDrawColor(200, 200, 200);
+          doc.rect(lx, ly, iconSize, iconSize);
+        }
+
+        // Draw name
+        doc.setTextColor(40, 40, 60);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.icon.name, lx + iconSize + 4, ly + iconSize / 2 + 1);
+
+        // Move to next position (2 columns)
+        if (lx < pageW / 2) {
+          lx += colWidth;
+        } else {
+          lx = 15;
+          ly += 18;
+        }
+      }
     }
 
     doc.save('rally-roadbook.pdf');
@@ -308,9 +368,9 @@ class ExportManager {
   /* ============================================================
      SVG -> PNG via offscreen canvas
      ============================================================ */
-  async _renderWaypointToPNG(wp, w = 260, h = 260) {
+  async _renderWaypointToPNG(wp, w = 260, h = 260, onIconUsed = null) {
     // 1. Build a standalone SVG string for this waypoint
-    const svgStr = this._buildWaypointSVG(wp);
+    const svgStr = this._buildWaypointSVG(wp, onIconUsed);
 
     // 2. Convert SVG string to a Blob URL
     const blob    = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
@@ -336,11 +396,35 @@ class ExportManager {
   }
 
   /**
+   * Render a single icon to PNG for the used icons list
+   */
+  async _renderIconToPNG(ic, w = 120, h = 120) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svgStr = `<svg width="${w}" height="${h}" viewBox="0 0 32 32" xmlns="${ns}">${ic.svgContent}</svg>`;
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const blobURL = URL.createObjectURL(blob);
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(blobURL);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = err => { URL.revokeObjectURL(blobURL); reject(err); };
+      img.src = blobURL;
+    });
+  }
+
+  /**
    * Build a complete, self-contained SVG string for a waypoint.
    * We create a temporary SVG element, render the illustration into it,
    * then serialize it.
    */
-  _buildWaypointSVG(wp) {
+  _buildWaypointSVG(wp, onIconUsed = null) {
     // Create a detached SVG
     const ns  = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -381,6 +465,7 @@ class ExportManager {
       if (wp.svgState.drawLayerHTML) drawLayer.innerHTML = wp.svgState.drawLayerHTML;
       if (wp.svgState.iconLayerData) {
         wp.svgState.iconLayerData.forEach(d => {
+          if (onIconUsed) onIconUsed(d.iconId);
           const ic = window.iconManager.getById(d.iconId);
           if (!ic) return;
           const g = document.createElementNS(ns, 'g');

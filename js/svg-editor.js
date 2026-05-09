@@ -485,7 +485,10 @@ class SVGEditor {
     }
 
     /* ---- Driven route: road casing + surface + centre dashes ---- */
-    const pts = routePts.map(p => `${p.x},${p.y}`).join(' ');
+    const entryX = routePts[0] ? routePts[0].x : VW / 2;
+    const entryY = VH - PAD;
+    const routeWithEntry = [{ x: entryX, y: entryY }, ...routePts];
+    const pts = routeWithEntry.map(p => `${p.x},${p.y}`).join(' ');
     mk('polyline', { points: pts, fill: 'none', stroke: '#b0aa9a', 'stroke-width': 16, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
     mk('polyline', { points: pts, fill: 'none', stroke: '#dedad0', 'stroke-width': 11, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
     mk('polyline', { points: pts, fill: 'none', stroke: '#ffffff', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '8 10', opacity: 0.7 });
@@ -502,8 +505,7 @@ class SVGEditor {
     /* ---- BOLLETJE — always at south/bottom border (6 o'clock) ---- */
     // The first route point is already near the bottom because we rotated
     // so inBearing points up. We fix its y to the bottom border line.
-    const entryX = routePts[0] ? routePts[0].x : VW / 2;
-    mk('circle', { cx: entryX, cy: VH - PAD, r: 9, fill: '#000000', stroke: 'none' });
+    mk('circle', { cx: entryX, cy: entryY, r: 9, fill: '#000000', stroke: 'none' });
 
     /* ---- PIJLTJE — exit arrow at last route point ---- */
     const exitPt  = routePts[routePts.length - 1];
