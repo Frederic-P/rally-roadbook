@@ -35,6 +35,53 @@ class App {
       this._showWaypointContextMenu(clickedWP, event.latlng);
     };
 
+    this._markerDragFn = (wp, snapped) => {
+      const oldLatLng = wp.latlng;
+      wp.latlng = snapped.latlng;
+      wp.distTotal = snapped.distTotal;
+      wp.bearing = snapped.bearing;
+      wp.inBearing = snapped.inBearing;
+
+      // Shift route window bounds if they exist, so illustration stays centered
+      if (wp.routeWindowBounds) {
+        const dLat = wp.latlng.lat - oldLatLng.lat;
+        const dLng = wp.latlng.lng - oldLatLng.lng;
+        
+        // Handle both Leaflet objects and plain objects from JSON
+        let sw, ne;
+        if (wp.routeWindowBounds.getSouthWest) {
+          sw = wp.routeWindowBounds.getSouthWest();
+          ne = wp.routeWindowBounds.getNorthEast();
+        } else {
+          sw = wp.routeWindowBounds._southWest;
+          ne = wp.routeWindowBounds._northEast;
+        }
+        
+        if (sw && ne) {
+          wp.routeWindowBounds = L.latLngBounds(
+            [sw.lat + dLat, sw.lng + dLng],
+            [ne.lat + dLat, ne.lng + dLng]
+          );
+        }
+      }
+
+      this._updateWaypointDistances();
+      this.refreshWaypointList();
+
+      if (this.wpManager.currentIndex !== null) {
+        const currentWP = this.wpManager.waypoints[this.wpManager.currentIndex];
+        if (currentWP.id === wp.id) {
+          this.editorUI.updateDisplay(wp);
+        }
+      }
+    };
+
+    this._markerDragEndFn = (wp, snapped) => {
+      this._updateWaypointDistances();
+      this.refreshWaypointList();
+      this._saveToStorage();
+    };
+
     this.routeManager.onRouteLineDblClick  = (latlng) => this._onRouteLineDblClick(latlng);
     this.routeManager.onRouteLineRightClick = (latlng) => this._onRouteLineDblClick(latlng);
     this.routeManager.onViaDragEnd         = (latlng) => this._onViaDragEnd(latlng);
@@ -139,7 +186,35 @@ class App {
 
     // New Route
     document.getElementById('btn-new-route').addEventListener('click', async () => {
-      if (await Modal.confirm('Start a new route? All unsaved data will be cleared.')) this._clearAll();
+      const choice = await Modal.choice('How would you like to start your new route?', [
+        { label: 'Plan a route', value: 'plan', primary: true },
+        { label: 'New route from GPX', value: 'gpx' },
+        { label: 'Cancel', value: false }
+      ], 'New Route');
+
+      if (choice === 'plan') {
+        if (await Modal.confirm('Start a new manual route? All unsaved data will be cleared.')) {
+          this._clearAll();
+        }
+      } else if (choice === 'gpx') {
+        document.getElementById('input-load-gpx').click();
+      }
+    });
+
+    document.getElementById('input-load-gpx').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      this._showLoading('Loading GPX…');
+      this.exportManager.importGPX(file)
+        .then(({ routeSteps, routeCoords, startPoint, endPoint }) => this._loadFromGPXData(routeSteps, routeCoords, startPoint, endPoint))
+        .catch(err => {
+          console.error(err);
+          Modal.alert('Error loading GPX: ' + err.message);
+        })
+        .finally(() => {
+          this._hideLoading();
+          e.target.value = '';
+        });
     });
 
     // Export / Import
@@ -287,11 +362,75 @@ class App {
     this.wpManager.waypoints.splice(insertAt, 0, wp);
     this.wpManager._reindex();
 
-    this.routeManager.placeWaypointMarker(wp, this._markerClickFn, this._markerRightClickFn);
+    this.routeManager.placeWaypointMarker(wp, this._markerClickFn, this._markerRightClickFn, this._markerDragFn, this._markerDragEndFn);
 
     this.refreshWaypointList();
     this._updateStats();
     this._saveToStorage();
+  }
+
+  async _loadFromGPXData(routeSteps, routeCoords, startPoint, endPoint) {
+    this._showLoading('Processing GPX…');
+    try {
+      this._clearAll(false); // Start with a fresh state, but don't reset map yet
+      
+      this.routeManager.routeCoords = routeCoords || [];
+      this.routeManager.routeSteps = routeSteps || [];
+      this.routeManager.startPoint = startPoint || (routeCoords && routeCoords[0]);
+      this.routeManager.endPoint = endPoint || (routeCoords && routeCoords[routeCoords.length - 1]);
+
+      // Geocode endpoints
+      if (this.routeManager.startPoint && this.routeManager.endPoint) {
+        try {
+          const [startAddr, endAddr] = await Promise.all([
+            this.routeManager.reverseGeocode(this.routeManager.startPoint),
+            this.routeManager.reverseGeocode(this.routeManager.endPoint)
+          ]);
+          this.startLabel = startAddr;
+          this.endLabel = endAddr;
+        } catch (e) {
+          console.warn('Geocoding failed:', e);
+          this.startLabel = 'GPX Start';
+          this.endLabel   = 'GPX Finish';
+        }
+      } else {
+        this.startLabel = 'GPX Start';
+        this.endLabel   = 'GPX Finish';
+      }
+      
+      document.getElementById('input-start').value = this.startLabel;
+      document.getElementById('input-end').value   = this.endLabel;
+      
+      // Convert steps to Waypoints
+      (routeSteps || []).forEach((step, i) => {
+        const wp = this.wpManager.createFromStep(step, i);
+        this.wpManager.addWaypoint(wp);
+      });
+
+      this.routeManager.restoreWaypointMarkers(
+        this.wpManager.getAll(),
+        this._markerClickFn,
+        this._markerRightClickFn,
+        this._markerDragFn,
+        this._markerDragEndFn
+      );
+
+      // Re-draw the interactive line to be sure it's visible
+      if (this.routeManager.routeCoords.length > 0) {
+        this.routeManager._drawInteractiveLine();
+        this.routeManager._placeEndpointMarkers();
+        this.routeManager.fitRoute();
+      }
+
+      this.refreshWaypointList();
+      this._updateStats();
+      this._saveToStorage();
+    } catch (err) {
+      console.error('GPX processing error:', err);
+      Modal.alert('Error processing GPX data: ' + err.message);
+    } finally {
+      this._hideLoading();
+    }
   }
 
   _estimateDistToCoord(coordIdx) {
@@ -301,6 +440,19 @@ class App {
       d += this.routeManager.map.distance(coords[i - 1], coords[i]);
     }
     return d;
+  }
+
+  _updateWaypointDistances() {
+    const wps = this.wpManager.waypoints;
+    // Sort by distTotal so sequence is always correct if dragged past each other
+    wps.sort((a, b) => a.distTotal - b.distTotal);
+
+    // Recalculate distFromPrev and listIndex
+    wps.forEach((wp, i) => {
+      wp.listIndex = i;
+      const prev = wps[i - 1];
+      wp.distFromPrev = prev ? (wp.distTotal - prev.distTotal) : wp.distTotal;
+    });
   }
 
   /* ============================================================
@@ -620,6 +772,12 @@ class App {
           wp.comment           = match.comment;
           wp.svgState          = match.svgState;
           wp.routeWindowBounds = match.routeWindowBounds || null;
+          // Preserve fine-tuned position and map snippet if matched
+          wp.latlng            = match.latlng;
+          wp.nearCoords        = match.nearCoords;
+          wp.bearing           = match.bearing;
+          wp.inBearing         = match.inBearing;
+          wp.distTotal         = match.distTotal;
         }
         this.wpManager.addWaypoint(wp);
       });
@@ -627,7 +785,9 @@ class App {
       this.routeManager.restoreWaypointMarkers(
         this.wpManager.getAll(),
         this._markerClickFn,
-        this._markerRightClickFn
+        this._markerRightClickFn,
+        this._markerDragFn,
+        this._markerDragEndFn
       );
 
       this.routeManager.fitRoute();
@@ -700,7 +860,13 @@ class App {
   _deleteWaypoint(wp) {
     if (this.editorUI._currentWp === wp) this.editorUI.close();
     this.wpManager.removeWaypoint(wp.id);
-    this.routeManager.restoreWaypointMarkers(this.wpManager.getAll(), this._markerClickFn, this._markerRightClickFn);
+    this.routeManager.restoreWaypointMarkers(
+      this.wpManager.getAll(),
+      this._markerClickFn,
+      this._markerRightClickFn,
+      this._markerDragFn,
+      this._markerDragEndFn
+    );
     this.refreshWaypointList();
     this._updateStats();
     this._saveToStorage();
@@ -709,7 +875,7 @@ class App {
   /* ============================================================
      CLEAR ALL
      ============================================================ */
-  _clearAll() {
+  _clearAll(resetMap = true) {
     this.viaPoints.forEach(v => { if (v.marker) this.routeManager.map.removeLayer(v.marker); });
     this.viaPoints = [];
 
@@ -734,6 +900,8 @@ class App {
     this._saveToStorage();
     if (this.editorUI) this.editorUI.close();
     this.wpManager.currentIndex = null;
+
+    if (!resetMap) return;
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -833,10 +1001,20 @@ class App {
       this.routeManager.restoreWaypointMarkers(
         this.wpManager.getAll(),
         this._markerClickFn,
-        this._markerRightClickFn
+        this._markerRightClickFn,
+        this._markerDragFn,
+        this._markerDragEndFn
       );
 
-      if (this.routeManager.startPoint && this.routeManager.endPoint) {
+      if (routeData && routeData.routeCoords && routeData.routeSteps) {
+        // Restore pre-calculated route (e.g. from GPX)
+        this.routeManager.routeCoords = routeData.routeCoords;
+        this.routeManager.routeSteps  = routeData.routeSteps;
+        this.routeManager._precalculateDistances();
+        this.routeManager._drawInteractiveLine();
+        this.routeManager._placeEndpointMarkers();
+        this.routeManager.fitRoute();
+      } else if (this.routeManager.startPoint && this.routeManager.endPoint) {
         try {
           const viaLatLngs = this.viaPoints.map(v => v.latlng);
           await this.routeManager.calculateRoute(

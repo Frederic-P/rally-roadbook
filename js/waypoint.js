@@ -977,6 +977,26 @@ class WaypointEditorUI {
     this.iconRotVal.textContent   = `${rotation}°`;
   }
   hideIconProps() { this.iconProps.classList.add('hidden'); }
+
+  /**
+   * Update the UI fields and illustration for a waypoint that is currently
+   * being edited (e.g. during map-dragging).
+   */
+  updateDisplay(wp) {
+    if (!wp || this._currentWp !== wp) return;
+
+    this.distPrevEl.value  = this.wpManager.formatDistance(wp.distFromPrev);
+    this.distTotalEl.value = this.wpManager.formatDistance(wp.distTotal);
+
+    if (this._routeWindow && wp.routeWindowBounds) {
+      this._routeWindow.show(wp.routeWindowBounds, wp.latlng);
+      // Recalculate nearCoords strictly from the current bounding box
+      // to avoid bolletje/pijltje misalignment during dragging.
+      this._redrawFromBounds(wp, wp.routeWindowBounds);
+    } else {
+      this.svgEditor.renderBaseIllustration(wp);
+    }
+  }
 }
 
 /* =====================================================

@@ -22,6 +22,7 @@ class RouteManager {
     this.endMarker       = null;
     this.routeCoords     = [];
     this.routeSteps      = [];
+    this.routeDistances  = [];
 
     this._pickMode        = null;
     this._onPickCallback  = null;
@@ -49,11 +50,12 @@ class RouteManager {
     this.map = L.map(container || mapEl, {
       center: this.FALLBACK,
       zoom: 13,
-      zoomControl: true
+      zoomControl: true,
+      attributionControl: true
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors || RallyRoadbookCreator',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Route from <a href="http://project-osrm.org/">OSRM</a>',
       maxZoom: 19
     }).addTo(this.map);
 
@@ -90,7 +92,12 @@ class RouteManager {
 
   async geocode(query) {
     const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-    const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const resp = await fetch(url, { 
+      headers: { 
+        'Accept-Language': 'en',
+        'X-Requested-With': 'RallyRoadbookCreator'
+      } 
+    });
     const data = await resp.json();
     if (!data.length) throw new Error('Location not found');
     return L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
@@ -98,7 +105,12 @@ class RouteManager {
 
   async reverseGeocode(latlng) {
     const url  = `https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`;
-    const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const resp = await fetch(url, { 
+      headers: { 
+        'Accept-Language': 'en',
+        'X-Requested-With': 'RallyRoadbookCreator'
+      } 
+    });
     const data = await resp.json();
     return data.display_name || `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
   }
@@ -178,6 +190,9 @@ class RouteManager {
       .on('routesfound', e => {
         const route       = e.routes[0];
         this.routeCoords  = route.coordinates;
+
+        this._precalculateDistances();
+
         this.routeSteps   = this._processSteps(route, viaLatLngs);
         this._drawInteractiveLine();
         this._placeEndpointMarkers();
@@ -186,6 +201,15 @@ class RouteManager {
       .on('routingerror', err => reject(err))
       .addTo(this.map);
     });
+  }
+
+  _precalculateDistances() {
+    this.routeDistances = [0];
+    let acc = 0;
+    for (let i = 1; i < this.routeCoords.length; i++) {
+      acc += this.map.distance(this.routeCoords[i - 1], this.routeCoords[i]);
+      this.routeDistances[i] = acc;
+    }
   }
 
   /* ---- DRAW INTERACTIVE ROUTE LINE ---- */
@@ -422,22 +446,82 @@ class RouteManager {
     return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
   }
 
+  snapToRoute(latlng) {
+    if (!this.routeCoords || this.routeCoords.length === 0) return null;
+    
+    const bestIdx = this._nearestCoordIdx(latlng);
+    const snappedLatlng = this.routeCoords[bestIdx];
+    
+    // Calculate total distance to this point
+    const distTotal = this.routeDistances ? this.routeDistances[bestIdx] : 0;
+    
+    // Calculate bearings
+    const prevIdx = Math.max(0, bestIdx - 5);
+    const nextIdx = Math.min(this.routeCoords.length - 1, bestIdx + 5);
+    const inBearing   = this._bearingBetween(this.routeCoords[prevIdx], snappedLatlng);
+    const exitBearing = this._bearingBetween(snappedLatlng, this.routeCoords[nextIdx]);
+
+    return {
+      latlng: snappedLatlng,
+      coordIdx: bestIdx,
+      distTotal,
+      bearing: exitBearing,
+      inBearing,
+      nearCoords: {
+        before: this.routeCoords.slice(Math.max(0, bestIdx - 12), bestIdx),
+        after:  this.routeCoords.slice(bestIdx + 1, Math.min(this.routeCoords.length, bestIdx + 13))
+      }
+    };
+  }
+
   /* ---- WAYPOINT MARKERS ---- */
-  placeWaypointMarker(wp, onClick, onRightClick) {
+  placeWaypointMarker(wp, onClick, onRightClick, onDrag, onDragEnd) {
     const hasData = !!(wp.comment || wp.svgState);
     const icon = L.divIcon({
       className: '',
       html: `<div class="wp-marker-circle${hasData ? ' has-data' : ''}"></div>`,
       iconSize: [16, 16], iconAnchor: [8, 8]
     });
-    const marker = L.marker(wp.latlng, { icon, zIndexOffset: 500 }).addTo(this.map);
-    marker.on('click', e => { L.DomEvent.stopPropagation(e); onClick(wp); });
+
+    const marker = L.marker(wp.latlng, { 
+      icon, 
+      zIndexOffset: 500,
+      draggable: true 
+    }).addTo(this.map);
+
+    // Waypoint markers are always draggable
+    marker.on('mousedown', e => {
+      L.DomEvent.stopPropagation(e.originalEvent);
+      marker.dragging.enable();
+    });
+
+    marker.on('click', e => { 
+      // If we dragged, Leaflet might still fire a click; 
+      // but usually mousedown-drag is handled by Leaflet's internal state.
+      L.DomEvent.stopPropagation(e); 
+      onClick(wp); 
+    });
+
     if (onRightClick) {
       marker.on('contextmenu', e => {
         L.DomEvent.stopPropagation(e);
         onRightClick(wp, e);
       });
     }
+
+    marker.on('drag', e => {
+      const snapped = this.snapToRoute(marker.getLatLng());
+      if (snapped) {
+        marker.setLatLng(snapped.latlng);
+        if (onDrag) onDrag(wp, snapped);
+      }
+    });
+
+    marker.on('dragend', e => {
+      const snapped = this.snapToRoute(marker.getLatLng());
+      if (onDragEnd) onDragEnd(wp, snapped);
+    });
+
     wp.marker = marker;
     this.waypointMarkers.push(marker);
     return marker;
@@ -455,7 +539,7 @@ class RouteManager {
    * Re-add all waypoint markers to the map.
    * Called by app.js after every route recalculation so markers are never lost.
    */
-  restoreWaypointMarkers(wps, onClickFn, onRightClickFn) {
+  restoreWaypointMarkers(wps, onClickFn, onRightClickFn, onDragFn, onDragEndFn) {
     // Remove any stale marker references first (safety)
     this.waypointMarkers.forEach(m => {
       try { this.map.removeLayer(m); } catch (_) {}
@@ -463,7 +547,7 @@ class RouteManager {
     this.waypointMarkers = [];
 
     wps.forEach(wp => {
-      if (wp.latlng) this.placeWaypointMarker(wp, onClickFn, onRightClickFn);
+      if (wp.latlng) this.placeWaypointMarker(wp, onClickFn, onRightClickFn, onDragFn, onDragEndFn);
     });
   }
 
@@ -489,15 +573,148 @@ class RouteManager {
 
   serialize() {
     return {
-      start: this.startPoint ? { lat: this.startPoint.lat, lng: this.startPoint.lng } : null,
-      end:   this.endPoint   ? { lat: this.endPoint.lat,   lng: this.endPoint.lng   } : null,
-      via:   this.viaPoints.map(v => ({ lat: v.latlng.lat, lng: v.latlng.lng }))
+      start:       this.startPoint ? { lat: this.startPoint.lat, lng: this.startPoint.lng } : null,
+      end:         this.endPoint   ? { lat: this.endPoint.lat,   lng: this.endPoint.lng   } : null,
+      via:         this.viaPoints.map(v => ({ lat: v.latlng.lat, lng: v.latlng.lng })),
+      routeCoords: this.routeCoords,
+      routeSteps:  this.routeSteps
     };
   }
 
   totalDistance() {
     if (!this.routeSteps.length) return 0;
     return this.routeSteps[this.routeSteps.length - 1].distTotal || 0;
+  }
+
+  /* ---- GPX TRACK LOADING ---- */
+  async loadGPXTrack(coords, manualWaypoints = []) {
+    this.routeCoords = coords;
+    this.startPoint  = coords[0];
+    this.endPoint    = coords[coords.length - 1];
+
+    this._precalculateDistances();
+
+    this._clearRouteLines();
+    if (this.startMarker) { this.map.removeLayer(this.startMarker); this.startMarker = null; }
+    if (this.endMarker)   { this.map.removeLayer(this.endMarker);   this.endMarker   = null; }
+
+    // This method returns the steps array
+    const steps = this._identifyWaypointsFromCoords(coords, manualWaypoints);
+    this.routeSteps = steps;
+    
+    this._drawInteractiveLine();
+    this._placeEndpointMarkers();
+    this.fitRoute();
+
+    return { 
+      routeSteps:  this.routeSteps, 
+      routeCoords: this.routeCoords,
+      startPoint:  this.startPoint,
+      endPoint:    this.endPoint
+    };
+  }
+
+  _identifyWaypointsFromCoords(coords, manualWaypoints = []) {
+    const steps = [];
+    const distUpTo = [0];
+    for (let i = 1; i < coords.length; i++) {
+      distUpTo[i] = distUpTo[i - 1] + this.map.distance(coords[i - 1], coords[i]);
+    }
+
+    // Always add start
+    const addStep = (cIdx, type = 'straight', instr = 'Maneuver') => {
+      const latlng = coords[cIdx];
+      
+      // Calculate bearings
+      const prevPt = coords[Math.max(0, cIdx - 1)];
+      const nextPt = coords[Math.min(coords.length - 1, cIdx + 1)];
+      const inBearing = this._bearingBetween(prevPt, latlng);
+      const exitBearing = this._bearingBetween(latlng, nextPt);
+
+      const prevStep = steps[steps.length - 1];
+      const distFromPrev = prevStep ? (distUpTo[cIdx] - distUpTo[prevStep.coordIdx]) : 0;
+      
+      steps.push({
+        coordIdx: cIdx,
+        latlng,
+        type,
+        instruction: instr,
+        bearing:     exitBearing,
+        inBearing,
+        distAB:      0, // Will be updated by app if needed
+        distFromPrev,
+        distTotal:   distUpTo[cIdx],
+        isViaPassthrough: false,
+        nearCoords: {
+          before: coords.slice(Math.max(0, cIdx - 12), cIdx),
+          after:  coords.slice(cIdx + 1, Math.min(coords.length, cIdx + 13))
+        }
+      });
+    };
+
+    // 1. Add Start
+    addStep(0, 'start', 'Start');
+
+    // 2. Identify sharp turns
+    const TURN_THRESHOLD = 25; // degrees
+    const MIN_DIST_BETWEEN = 50; // meters
+    let lastWPIdx = 0;
+
+    for (let i = 5; i < coords.length - 5; i++) {
+      const dFromLast = distUpTo[i] - distUpTo[lastWPIdx];
+      if (dFromLast < MIN_DIST_BETWEEN) continue;
+
+      // Look at bearing change over a small window
+      const b1 = this._bearingBetween(coords[i - 3], coords[i]);
+      const b2 = this._bearingBetween(coords[i], coords[i + 3]);
+      let diff = Math.abs(b2 - b1);
+      if (diff > 180) diff = 360 - diff;
+
+      if (diff > TURN_THRESHOLD) {
+        let type = 'straight';
+        if (diff > 45) {
+          // Determine direction
+          const angle = (b2 - b1 + 540) % 360 - 180; // normalized to -180..180
+          type = angle < 0 ? 'turn-left' : 'turn-right';
+        } else {
+          const angle = (b2 - b1 + 540) % 360 - 180;
+          type = angle < 0 ? 'bear-left' : 'bear-right';
+        }
+        
+        addStep(i, type, `Turn ${type.split('-')[1]}`);
+        lastWPIdx = i;
+      }
+    }
+
+    // 3. Add manual waypoints if any (match to nearest coord)
+    manualWaypoints.forEach(mw => {
+      let bestIdx = 0, bestDist = Infinity;
+      coords.forEach((c, idx) => {
+        const d = this.map.distance(mw.latlng, c);
+        if (d < bestDist) { bestDist = d; bestIdx = idx; }
+      });
+      
+      // Check if we already have a waypoint very close
+      const tooClose = steps.some(s => Math.abs(s.coordIdx - bestIdx) < 5);
+      if (!tooClose) {
+        addStep(bestIdx, 'straight', mw.name || 'Waypoint');
+      }
+    });
+
+    // 4. Add Finish (if not already there)
+    if (steps[steps.length - 1].coordIdx !== coords.length - 1) {
+      addStep(coords.length - 1, 'finish', 'Finish');
+    }
+
+    // Re-sort steps by coordIdx
+    steps.sort((a, b) => a.coordIdx - b.coordIdx);
+
+    // Recalculate distFromPrev after sorting
+    for (let i = 1; i < steps.length; i++) {
+      steps[i].distFromPrev = distUpTo[steps[i].coordIdx] - distUpTo[steps[i - 1].coordIdx];
+    }
+
+    return steps;
   }
 }
 

@@ -526,6 +526,34 @@ class ExportManager {
     const wpData    = JSON.parse(await wpFile.async('string'));
     return { routeData, wpData };
   }
+
+  async importGPX(file) {
+    const text = await file.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    
+    // 1. Extract track points
+    const trkpts = Array.from(xml.querySelectorAll('trkpt'));
+    if (!trkpts.length) throw new Error('No track points found in GPX');
+    
+    const coords = trkpts.map(p => L.latLng(
+      parseFloat(p.getAttribute('lat')),
+      parseFloat(p.getAttribute('lon'))
+    ));
+
+    // 2. Extract explicit waypoints if any
+    const wpts = Array.from(xml.querySelectorAll('wpt'));
+    const manualWaypoints = wpts.map(p => ({
+      latlng: L.latLng(parseFloat(p.getAttribute('lat')), parseFloat(p.getAttribute('lon'))),
+      name: p.querySelector('name')?.textContent || '',
+      desc: p.querySelector('desc')?.textContent || ''
+    }));
+
+    // 3. Let RouteManager process the track and identify waypoints
+    const result = await this.routeManager.loadGPXTrack(coords, manualWaypoints);
+
+    return result;
+  }
 }
 
 window.ExportManager = ExportManager;

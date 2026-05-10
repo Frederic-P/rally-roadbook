@@ -75,6 +75,17 @@ const Modal = {
     return this._show(message, title, 'prompt', defaultValue);
   },
 
+  /**
+   * Show a custom choice modal.
+   * @param {string} message 
+   * @param {Array<{label: string, value: any, primary: boolean}>} choices 
+   * @param {string} title 
+   * @returns {Promise<any>}
+   */
+  choice(message, choices, title = 'Choose Option') {
+    return this._show(message, title, 'choice', choices);
+  },
+
   _show(message, title, type, defaultValue = '') {
     if (!this._backdrop) this.init();
 
@@ -83,8 +94,13 @@ const Modal = {
     
     // Reset states
     this._inputContainer.classList.add('hidden');
+    this._btnOk.classList.remove('hidden');
     this._btnCancel.classList.remove('hidden');
     this._btnOk.textContent = 'OK';
+
+    const footer = this._backdrop.querySelector('.modal-footer');
+    // Clear existing extra buttons
+    footer.querySelectorAll('.btn-choice').forEach(b => b.remove());
 
     if (type === 'alert') {
       this._btnCancel.classList.add('hidden');
@@ -94,6 +110,19 @@ const Modal = {
     } else if (type === 'confirm') {
         this._btnOk.textContent = 'Yes';
         this._btnCancel.textContent = 'No';
+    } else if (type === 'choice') {
+      // For choice, we might want custom buttons. 
+      // But let's simplify: if choices is provided, we use them.
+      this._btnOk.classList.add('hidden');
+      this._btnCancel.classList.add('hidden');
+      
+      defaultValue.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'btn ' + (choice.primary ? 'btn-primary' : 'btn-secondary') + ' btn-choice';
+        btn.textContent = choice.label;
+        btn.onclick = () => this._close(choice.value);
+        footer.appendChild(btn);
+      });
     }
 
     this._backdrop.classList.add('open');
